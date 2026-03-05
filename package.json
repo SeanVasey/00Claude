@@ -1,0 +1,14 @@
+{
+  "name": "00claude",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Baseline repository with quality, governance, and CI safeguards.",
+  "scripts": {
+    "lint:md": "markdownlint-cli2 \"**/*.md\"",
+    "test:smoke": "./scripts/smoke-check.sh",
+    "test": "npm run lint:md && npm run test:smoke"
+  },
+  "devDependencies": {
+    "markdownlint-cli2": "^0.15.0"
+  }
+}
