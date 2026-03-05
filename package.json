@@ -9,6 +9,6 @@
     "test": "npm run lint:md && npm run test:smoke"
   },
   "devDependencies": {
-    "markdownlint-cli2": "^0.15.0"
+    "markdownlint-cli2": "^0.21.0"
   }
 }
