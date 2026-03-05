@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Established a professional repository baseline with governance,
   security, and contributor guidance documents.
+- Added `LICENSE` file: Apache 2.0 license terms governing the project.
 - Added CI automation to validate docs and baseline repository requirements.
 - Added lightweight validation scripts and npm tooling for repeatable checks.
 - Added initial docs manifest and Vercel-ready configuration.
