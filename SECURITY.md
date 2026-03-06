@@ -7,7 +7,7 @@ branch.
 
 ## Reporting a Vulnerability
 
-Please report security issues privately by emailing **[security@example.com](mailto:security@example.com)**.
+Please report security issues privately by emailing **[sean@vaseyai.com](mailto:sean@vaseyai.com)**.
 Include:
 
 1. A clear description of the issue and impact.

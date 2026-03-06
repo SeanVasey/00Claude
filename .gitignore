@@ -17,6 +17,10 @@ dist/
 .env.local
 .env.*.local
 
+# Application logs
+logs/
+!logs/.gitkeep
+
 # OS/editor artifacts
 .DS_Store
 Thumbs.db

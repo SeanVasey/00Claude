@@ -10,7 +10,13 @@ required_files=(
   "CHANGELOG.md"
   "SECURITY.md"
   "CODE_OF_CONDUCT.md"
+  "CLAUDE.md"
   "docs/MANIFEST.md"
+  "docs/ABOUT.md"
+  "docs/RIGHTS.md"
+  "tasks/todo.md"
+  "tasks/lessons.md"
+  "logs/.gitkeep"
   ".github/workflows/ci.yml"
   "vercel.json"
 )
