@@ -13,6 +13,8 @@ required_files=(
   "docs/MANIFEST.md"
   ".github/workflows/ci.yml"
   "vercel.json"
+  "next.config.ts"
+  "tsconfig.json"
 )
 
 for file in "${required_files[@]}"; do

@@ -10,6 +10,8 @@ pnpm-debug.log*
 # Coverage and build output
 coverage/
 dist/
+.next/
+out/
 .vercel/
 
 # Environment files

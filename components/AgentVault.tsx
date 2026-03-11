@@ -1,0 +1,1367 @@
+"use client";
+
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import {
+  Bot, Code2, Search, Plus, Upload, Terminal, Wand2,
+  ChevronLeft, Save, FileText, Trash2, Layers,
+  Sparkles, Star, Copy, Download, X, Menu,
+  CheckCircle2, AlertCircle, Info, LayoutDashboard,
+  BookOpen, Eye, Edit3, ChevronLeftCircle,
+} from "lucide-react";
+
+// ═══════════════════════════════════════════════════════════════════════
+// GLOBAL STYLES & FONTS
+// ═══════════════════════════════════════════════════════════════════════
+const globalStyles = `
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Reddit+Sans:ital,wght@0,200..900;1,200..900&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --brand-red: #F25A38;
+    --brand-blue: #6366f1;
+  }
+
+  body {
+    background-color: #0b0a10;
+    color: #f8fafc;
+    font-family: 'Reddit Sans', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overscroll-behavior-y: none;
+  }
+
+  .font-bebas { font-family: 'Bebas Neue', sans-serif; }
+  .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(148, 163, 200, 0.15); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(99, 102, 241, 0.4); }
+
+  .hide-scrollbar::-webkit-scrollbar { display: none; }
+  .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+  .glass-panel {
+    background: rgba(30, 32, 48, 0.3);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(140, 160, 255, 0.08);
+  }
+
+  .glass-card {
+    background: rgba(20, 22, 35, 0.4);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(140, 160, 255, 0.06);
+    transition: all 0.2s ease;
+  }
+  @media (hover: hover) {
+    .glass-card:hover {
+      background: rgba(40, 45, 70, 0.5);
+      border-color: rgba(242, 90, 56, 0.25);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
+    }
+  }
+
+  .md-editor {
+    outline: none !important;
+    box-shadow: none !important;
+    resize: none;
+  }
+`;
+
+// ═══════════════════════════════════════════════════════════════════════
+// TYPES
+// ═══════════════════════════════════════════════════════════════════════
+interface Doc {
+  id: string;
+  name: string;
+  category: string;
+  description: string;
+  content: string;
+  tags: string[];
+  favorite: boolean;
+  createdAt: string;
+  updatedAt: string;
+  version: number;
+}
+
+interface Toast {
+  id: string;
+  msg: string;
+  type: "info" | "success" | "error";
+}
+
+interface CategoryConfig {
+  label: string;
+  color: string;
+  icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
+  singular: string;
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// CONSTANTS & UTILS
+// ═══════════════════════════════════════════════════════════════════════
+const CATS: Record<string, CategoryConfig> = {
+  agent: { label: "AGENTS", color: "#F25A38", icon: Bot, singular: "Agent" },
+  skill: { label: "SKILLS", color: "#8B5CF6", icon: Code2, singular: "Skill" },
+  template: { label: "TEMPLATES", color: "#14B8A6", icon: Layers, singular: "Template" },
+  prompt: { label: "PROMPTS", color: "#F59E0B", icon: Terminal, singular: "Prompt" },
+};
+
+const uid = () =>
+  `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+const now = () => new Date().toISOString();
+const ago = (iso: string) => {
+  if (!iso) return "";
+  const s = (Date.now() - new Date(iso).getTime()) / 1000;
+  if (s < 60) return "just now";
+  if (s < 3600) return `${Math.floor(s / 60)}m`;
+  if (s < 86400) return `${Math.floor(s / 3600)}h`;
+  if (s < 604800) return `${Math.floor(s / 86400)}d`;
+  return new Date(iso).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
+};
+
+// Markdown Renderer
+function renderMarkdown(md: string): string {
+  if (!md) return "";
+  return md
+    .replace(
+      /```(\w*)\n([\s\S]*?)```/g,
+      (_, _lang, code) =>
+        `<pre class="bg-[#0b0c14]/80 border border-[#6366f1]/10 rounded-xl p-4 overflow-x-auto font-mono text-[13px] leading-relaxed my-4 text-indigo-100 shadow-inner"><code>${code
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")}</code></pre>`
+    )
+    .replace(
+      /`([^`]+)`/g,
+      '<code class="bg-[#F25A38]/15 text-[#ff8a73] px-1.5 py-0.5 rounded-md font-mono text-[13px]">$1</code>'
+    )
+    .replace(
+      /^### (.+)$/gm,
+      '<h3 class="font-bebas text-xl tracking-wide text-indigo-200 mt-6 mb-2">$1</h3>'
+    )
+    .replace(
+      /^## (.+)$/gm,
+      '<h2 class="font-bebas text-2xl tracking-wide text-white mt-8 mb-3 border-b border-indigo-500/20 pb-2">$1</h2>'
+    )
+    .replace(
+      /^# (.+)$/gm,
+      '<h1 class="font-bebas text-4xl tracking-wide text-[#F25A38] mt-2 mb-6 drop-shadow-sm">$1</h1>'
+    )
+    .replace(
+      /^- \[x\] (.+)$/gm,
+      '<div class="flex items-start gap-2 my-1.5"><span class="text-emerald-400 text-sm mt-0.5">&#10003;</span><span class="line-through opacity-50">$1</span></div>'
+    )
+    .replace(
+      /^- \[ \] (.+)$/gm,
+      '<div class="flex items-start gap-2 my-1.5"><span class="text-indigo-400/40 text-sm mt-0.5">&#9675;</span><span>$1</span></div>'
+    )
+    .replace(
+      /^- (.+)$/gm,
+      '<div class="flex gap-2 my-1.5 pl-1"><span class="text-[#F25A38] opacity-70 mt-0.5">&#8250;</span><span class="leading-relaxed">$1</span></div>'
+    )
+    .replace(
+      /\*\*(.+?)\*\*/g,
+      '<strong class="text-white font-bold">$1</strong>'
+    )
+    .replace(
+      /\*(.+?)\*/g,
+      '<em class="text-indigo-200 italic">$1</em>'
+    )
+    .replace(/\n\n/g, '<div class="h-4"></div>')
+    .replace(/\n/g, "<br>");
+}
+
+const SEED_DOCS: Doc[] = [
+  {
+    id: uid(),
+    name: "Frontend Architect",
+    category: "agent",
+    description: "React/Tailwind architect focused on modern UI/UX.",
+    content:
+      "# Frontend Architect Agent\n\n## Role\nYou are an expert Frontend Architect specialized in React and Tailwind CSS.\n\n## Directives\n- Use arbitrary values sparingly.\n- Prioritize glassmorphic aesthetics (`bg-white/5 backdrop-blur-md`).\n- Provide the final code wrapped in standard markdown blocks.",
+    tags: ["react", "prompt-engineering"],
+    favorite: true,
+    createdAt: now(),
+    updatedAt: now(),
+    version: 1,
+  },
+  {
+    id: uid(),
+    name: "Python Data Pipeline",
+    category: "skill",
+    description:
+      "Extraction routine for unstructured text to Pandas DataFrame.",
+    content:
+      "# Skill: Data Extraction Pipeline\n\n## Description\nExtracts tabular data from HTML.\n\n## Steps\n1. Use `BeautifulSoup` to parse DOM.\n2. Output to `pandas.DataFrame`.\n3. Handle `None` gracefully.",
+    tags: ["python"],
+    favorite: false,
+    createdAt: now(),
+    updatedAt: now(),
+    version: 1,
+  },
+  {
+    id: uid(),
+    name: "CLAUDE.md Boilerplate",
+    category: "template",
+    description: "Standard project configuration template for Claude Code.",
+    content:
+      "# CLAUDE.md \u2014 Standard Boilerplate v2.0\n\n## Role\nSenior staff engineer + UX lead.\n\n## Principles\n- Best-practices first, ship-ready at all times\n- Boring-is-beautiful (reliable over clever)\n- Verify before push\n- WCAG accessibility\n- OWASP security\n\n## Verification (Before Every Commit)\n- [ ] Lint passes\n- [ ] Typecheck passes\n- [ ] Unit tests pass\n- [ ] Build succeeds\n- [ ] Conventional Commits format",
+    tags: ["claude-code", "full-stack"],
+    favorite: true,
+    createdAt: now(),
+    updatedAt: now(),
+    version: 1,
+  },
+  {
+    id: uid(),
+    name: "Code Review Prompt",
+    category: "prompt",
+    description:
+      "Structured code review covering security, performance, maintainability.",
+    content:
+      "# Code Review Prompt\n\nReview the following code for:\n\n## Security\n- Input validation and sanitization\n- Authentication/authorization checks\n- SQL injection, XSS, CSRF vulnerabilities\n\n## Performance\n- N+1 query detection\n- Unnecessary re-renders (React)\n- Memory leaks\n- Caching opportunities\n\n## Maintainability\n- Naming clarity\n- Function length and complexity\n- Type safety\n- Error handling completeness\n\nProvide findings as: CRITICAL / WARNING / SUGGESTION with file:line references.",
+    tags: ["testing", "security", "performance"],
+    favorite: false,
+    createdAt: now(),
+    updatedAt: now(),
+    version: 1,
+  },
+  {
+    id: uid(),
+    name: "MCP Server Builder",
+    category: "skill",
+    description:
+      "Model Context Protocol server with Zod schemas and tool registration.",
+    content:
+      '# MCP Server Builder Skill\n\n## Architecture\n- TypeScript with McpServer class\n- Zod schemas for runtime validation\n- Streamable HTTP for remote, stdio for local\n\n## Tool Registration\n```typescript\nserver.registerTool({\n  name: "search_docs",\n  description: "Search documentation by keyword",\n  inputSchema: z.object({\n    query: z.string().describe("Search query"),\n    limit: z.number().default(10),\n  }),\n  handler: async ({ query, limit }) => {\n    // implementation\n  },\n});\n```\n\n## Best Practices\n- Descriptive tool names (verb_noun)\n- Rich parameter descriptions\n- Pagination for list operations\n- Structured error responses',
+    tags: ["api-design", "testing"],
+    favorite: true,
+    createdAt: now(),
+    updatedAt: now(),
+    version: 1,
+  },
+];
+
+// ═══════════════════════════════════════════════════════════════════════
+// ANIMATED AMBIENT BACKGROUND
+// ═══════════════════════════════════════════════════════════════════════
+function AmbientField() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    let animationFrameId: number;
+
+    interface Particle {
+      x: number;
+      y: number;
+      vx: number;
+      vy: number;
+      r: number;
+      isRed: boolean;
+    }
+    const particles: Particle[] = [];
+
+    const resize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    window.addEventListener("resize", resize);
+    resize();
+
+    const particleCount = window.innerWidth < 768 ? 20 : 35;
+
+    for (let i = 0; i < particleCount; i++) {
+      particles.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        vx: (Math.random() - 0.5) * 0.2,
+        vy: (Math.random() - 0.5) * 0.2,
+        r: Math.random() * 1.5 + 0.5,
+        isRed: Math.random() > 0.6,
+      });
+    }
+
+    const draw = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+        if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+
+        for (let j = i + 1; j < particles.length; j++) {
+          const p2 = particles[j];
+          const dist = Math.hypot(p.x - p2.x, p.y - p2.y);
+          if (dist < 120) {
+            ctx.strokeStyle = `rgba(99, 102, 241, ${(1 - dist / 120) * 0.15})`;
+            ctx.lineWidth = 0.5;
+            ctx.beginPath();
+            ctx.moveTo(p.x, p.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.stroke();
+          }
+        }
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        const alpha = 0.2 + p.r * 0.1;
+        ctx.fillStyle = p.isRed
+          ? `rgba(242, 90, 56, ${alpha})`
+          : `rgba(99, 102, 241, ${alpha + 0.1})`;
+        ctx.fill();
+      }
+      animationFrameId = requestAnimationFrame(draw);
+    };
+    draw();
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+      window.removeEventListener("resize", resize);
+    };
+  }, []);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="fixed inset-0 z-0 pointer-events-none opacity-70"
+    />
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// MAIN APP COMPONENT
+// ═══════════════════════════════════════════════════════════════════════
+export default function AgentVault() {
+  // Navigation & State
+  const [hasEntered, setHasEntered] = useState(false);
+  const [view, setView] = useState("dashboard");
+  const [docs, setDocs] = useState<Doc[]>([]);
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [editing, setEditing] = useState<Doc | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Mobile Editor Tabs
+  const [mobileEditorTab, setMobileEditorTab] = useState("edit");
+
+  // AI State
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [aiDocType, setAiDocType] = useState("agent");
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiResult, setAiResult] = useState("");
+
+  // Toasts
+  const [toasts, setToasts] = useState<Toast[]>([]);
+  const showToast = useCallback(
+    (msg: string, type: "info" | "success" | "error" = "info") => {
+      const id = uid();
+      setToasts((p) => [...p, { id, msg, type }]);
+      setTimeout(() => setToasts((p) => p.filter((t) => t.id !== id)), 3000);
+    },
+    []
+  );
+
+  // Initialization
+  useEffect(() => {
+    const saved = localStorage.getItem("agentvault-docs");
+    if (saved) {
+      try {
+        setDocs(JSON.parse(saved));
+      } catch {
+        setDocs(SEED_DOCS);
+      }
+    } else {
+      setDocs(SEED_DOCS);
+    }
+
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) {
+        setMobileEditorTab("split");
+        setSidebarOpen(true);
+      } else {
+        setSidebarOpen(false);
+      }
+    };
+    window.addEventListener("resize", handleResize);
+    handleResize();
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Auto-save
+  useEffect(() => {
+    if (docs.length > 0) {
+      localStorage.setItem("agentvault-docs", JSON.stringify(docs));
+    }
+  }, [docs]);
+
+  // Actions
+  const enterApp = (targetView: string, category: string | null = null) => {
+    setHasEntered(true);
+    setView(targetView);
+    setActiveCategory(category);
+  };
+
+  const goHome = () => {
+    setHasEntered(false);
+    setSidebarOpen(false);
+  };
+
+  const createDoc = (category: string) => {
+    const doc: Doc = {
+      id: uid(),
+      name: `New ${CATS[category].singular}`,
+      category,
+      description: "",
+      content: `# New ${CATS[category].singular}\n\nStart typing...`,
+      tags: [],
+      favorite: false,
+      createdAt: now(),
+      updatedAt: now(),
+      version: 1,
+    };
+    setDocs((p) => [doc, ...p]);
+    setEditing(doc);
+    setView("editor");
+    if (window.innerWidth < 1024) setSidebarOpen(false);
+    showToast(`Created new ${CATS[category].singular}`, "success");
+  };
+
+  const saveDoc = (doc: Doc) => {
+    setDocs((p) =>
+      p.map((d) =>
+        d.id === doc.id
+          ? { ...doc, updatedAt: now(), version: d.version + 1 }
+          : d
+      )
+    );
+    setEditing(doc);
+    showToast("Saved to Vault", "success");
+  };
+
+  const deleteDoc = (id: string) => {
+    setDocs((p) => p.filter((d) => d.id !== id));
+    if (editing?.id === id) {
+      setEditing(null);
+      setView("library");
+    }
+    showToast("Document deleted");
+  };
+
+  const handleUploadFiles = (files: FileList | null) => {
+    if (!files) return;
+    Array.from(files).forEach((file) => {
+      if (!file.name.endsWith(".md") && !file.name.endsWith(".txt")) {
+        showToast("Only .md/.txt files allowed", "error");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const content = e.target?.result as string;
+        let category = "template";
+        if (
+          content.toLowerCase().includes("role") ||
+          content.toLowerCase().includes("agent")
+        )
+          category = "agent";
+        else if (content.toLowerCase().includes("skill")) category = "skill";
+
+        const doc: Doc = {
+          id: uid(),
+          name: file.name.replace(/\.(md|txt)$/, ""),
+          category,
+          description: "Imported document",
+          content,
+          tags: ["imported"],
+          favorite: false,
+          createdAt: now(),
+          updatedAt: now(),
+          version: 1,
+        };
+        setDocs((p) => [doc, ...p]);
+        showToast(`Imported ${file.name}`, "success");
+      };
+      reader.readAsText(file);
+    });
+  };
+
+  // AI Generation — calls server route or falls back to mock
+  const generateAI = async () => {
+    if (!aiPrompt.trim()) return;
+    setAiLoading(true);
+    setAiResult("");
+
+    try {
+      const res = await fetch("/api/anthropic/message", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: aiPrompt, docType: aiDocType }),
+      });
+      const data = await res.json();
+      if (data.content) {
+        setAiResult(data.content);
+        showToast("Generation complete", "success");
+      } else if (data.error) {
+        // Fallback to mock if API not configured
+        setAiResult(
+          `# AI Generated ${CATS[aiDocType].singular}\n\n## Objective\nYou are built to handle: "${aiPrompt}".\n\n## Instructions\n1. Analyze input thoroughly.\n2. Apply modern principles.\n3. Return optimized output.\n\n\`\`\`javascript\nconst vault = "secured";\nconsole.log(vault);\n\`\`\``
+        );
+        showToast("Using mock generation (no API key)", "info");
+      }
+    } catch {
+      // Fallback mock
+      setAiResult(
+        `# AI Generated ${CATS[aiDocType].singular}\n\n## Objective\nYou are built to handle: "${aiPrompt}".\n\n## Instructions\n1. Analyze input thoroughly.\n2. Apply modern principles.\n3. Return optimized output.\n\n\`\`\`javascript\nconst vault = "secured";\nconsole.log(vault);\n\`\`\``
+      );
+      showToast("Using mock generation (API unavailable)", "info");
+    }
+    setAiLoading(false);
+  };
+
+  // Derived State
+  const filteredDocs = useMemo(() => {
+    let res = docs;
+    if (activeCategory) res = res.filter((d) => d.category === activeCategory);
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      res = res.filter(
+        (d) =>
+          d.name.toLowerCase().includes(q) ||
+          d.tags.some((t) => t.toLowerCase().includes(q))
+      );
+    }
+    return res.sort(
+      (a, b) =>
+        new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+    );
+  }, [docs, activeCategory, searchQuery]);
+
+  const stats = {
+    total: docs.length,
+    agents: docs.filter((d) => d.category === "agent").length,
+    skills: docs.filter((d) => d.category === "skill").length,
+    templates: docs.filter((d) => d.category === "template").length,
+  };
+
+  const rootBgClasses =
+    "bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#1d1a2f] via-[#110e18] to-[#08070b]";
+
+  // ═══════════════════════════════════════════════════════════════════
+  // RENDER: HERO (LANDING)
+  // ═══════════════════════════════════════════════════════════════════
+  if (!hasEntered) {
+    return (
+      <div
+        className={`min-h-[100dvh] flex flex-col relative overflow-hidden ${rootBgClasses}`}
+      >
+        <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
+        <AmbientField />
+
+        {/* Glows */}
+        <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-indigo-600/10 rounded-full blur-[120px] pointer-events-none mix-blend-screen" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] bg-[#F25A38]/10 rounded-full blur-[150px] pointer-events-none mix-blend-screen" />
+
+        {/* Header */}
+        <header className="relative z-20 flex justify-between items-center p-6 lg:px-12 lg:py-8 w-full max-w-7xl mx-auto">
+          <div className="font-bebas text-2xl lg:text-3xl tracking-widest flex items-center gap-2 drop-shadow-md">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#F25A38] to-[#C0392B] flex items-center justify-center shadow-[0_0_15px_rgba(242,90,56,0.6)]">
+              <Code2 className="w-5 h-5 text-white" />
+            </div>
+            <span className="text-white mt-1">00</span>
+            <span className="text-[#F25A38] mt-1">CLAUDE</span>
+          </div>
+          <div className="flex gap-6 text-sm text-indigo-200/70 font-medium">
+            <button className="hover:text-white transition-colors">Docs</button>
+          </div>
+        </header>
+
+        {/* Hero Content */}
+        <main className="relative z-20 flex-1 flex flex-col items-center justify-center text-center px-6 mt-[-5vh]">
+          <h1 className="font-bebas text-[4.5rem] leading-[0.9] md:text-[7rem] lg:text-[8.5rem] tracking-tight mb-6">
+            <span className="text-white block drop-shadow-sm">
+              AGENTS, SKILLS,
+            </span>
+            <span className="text-white block drop-shadow-sm">
+              AND PROTOCOLS.
+            </span>
+            <span className="text-[#F25A38] block drop-shadow-[0_0_40px_rgba(242,90,56,0.5)]">
+              FINALLY IN ONE
+            </span>
+            <span className="text-[#F25A38] block drop-shadow-[0_0_40px_rgba(242,90,56,0.5)]">
+              REPO.
+            </span>
+          </h1>
+
+          <p className="text-indigo-200/60 text-base md:text-xl leading-relaxed mb-12 max-w-2xl font-light">
+            The ultimate repository for Claude Code and other LLMs. Construct,
+            refine, and deploy agentic capabilities from a single fast,
+            beautiful workspace.
+          </p>
+
+          {/* Entry Bar */}
+          <div className="glass-panel p-2 rounded-[1.25rem] flex flex-col sm:flex-row gap-2 w-full max-w-lg shadow-2xl">
+            <button
+              onClick={() => enterApp("dashboard")}
+              className="flex-1 flex items-center gap-3 bg-black/40 text-indigo-200/50 px-5 py-4 rounded-xl hover:text-white hover:bg-black/60 transition-all border border-indigo-500/10"
+            >
+              <Search className="w-5 h-5 text-[#F25A38]" />
+              <span className="text-[0.95rem]">Search the vault...</span>
+            </button>
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => enterApp("library", null)}
+                className="flex-1 sm:flex-none px-6 py-4 rounded-xl bg-indigo-500/20 text-indigo-100 font-medium hover:bg-indigo-500/30 transition-all border border-indigo-500/20"
+              >
+                All
+              </button>
+              <button
+                onClick={() => enterApp("library", "agent")}
+                className="flex-1 sm:flex-none px-4 py-4 rounded-xl text-indigo-200/60 hover:text-white hover:bg-white/5 transition-all flex items-center justify-center gap-2 border border-transparent hover:border-indigo-500/20"
+              >
+                <Bot className="w-4 h-4 text-[#F25A38]" />
+                <span className="hidden sm:inline">Agents</span>
+              </button>
+              <button
+                onClick={() => enterApp("library", "skill")}
+                className="flex-1 sm:flex-none px-4 py-4 rounded-xl text-indigo-200/60 hover:text-white hover:bg-white/5 transition-all flex items-center justify-center gap-2 border border-transparent hover:border-indigo-500/20"
+              >
+                <Code2 className="w-4 h-4 text-[#8B5CF6]" />
+                <span className="hidden sm:inline">Skills</span>
+              </button>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // RENDER: APPLICATION
+  // ═══════════════════════════════════════════════════════════════════
+  return (
+    <div
+      className={`flex h-[100dvh] text-white overflow-hidden relative ${rootBgClasses}`}
+    >
+      <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
+      <AmbientField />
+
+      {/* Ambient Glow */}
+      <div className="absolute top-0 left-[-10%] w-[50%] h-[50%] bg-indigo-600/10 rounded-full blur-[150px] pointer-events-none" />
+
+      {/* Toasts */}
+      <div className="fixed top-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none">
+        {toasts.map((t) => (
+          <div
+            key={t.id}
+            className={`glass-panel px-4 py-3 rounded-xl flex items-center gap-3 shadow-xl border-l-4 pointer-events-auto ${
+              t.type === "error"
+                ? "border-l-red-500 text-red-100"
+                : t.type === "success"
+                  ? "border-l-emerald-500 text-emerald-100"
+                  : "border-l-[#F25A38] text-white"
+            }`}
+          >
+            {t.type === "error" ? (
+              <AlertCircle className="w-4 h-4" />
+            ) : t.type === "success" ? (
+              <CheckCircle2 className="w-4 h-4" />
+            ) : (
+              <Info className="w-4 h-4" />
+            )}
+            <span className="text-sm font-medium">{t.msg}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Mobile Sidebar Overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-[#06040a]/80 backdrop-blur-sm z-40 lg:hidden transition-opacity"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 w-72 glass-panel border-r border-indigo-500/10 transform transition-transform duration-300 ease-in-out flex flex-col lg:relative lg:translate-x-0 ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <div className="p-6 border-b border-indigo-500/10 shrink-0 flex justify-between items-center">
+          <div className="cursor-pointer group" onClick={goHome}>
+            <div className="text-[10px] tracking-[0.25em] text-indigo-400 font-bold mb-1.5 group-hover:text-indigo-300 transition-colors flex items-center gap-1">
+              <ChevronLeftCircle className="w-3 h-3" /> RETURN TO HOME
+            </div>
+            <div className="font-bebas text-3xl tracking-widest flex items-center gap-1.5">
+              <span className="text-white group-hover:text-indigo-50 transition-colors">
+                00
+              </span>
+              <span className="text-[#F25A38] drop-shadow-[0_0_15px_rgba(242,90,56,0.6)]">
+                CLAUDE
+              </span>
+            </div>
+          </div>
+
+          <button
+            className="lg:hidden p-2 text-indigo-200/50 hover:text-white"
+            onClick={() => setSidebarOpen(false)}
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <nav className="flex-1 p-4 flex flex-col gap-1.5 overflow-y-auto hide-scrollbar">
+          {[
+            { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+            { id: "library", label: "Vault Library", icon: BookOpen },
+            { id: "ai", label: "Forge with AI", icon: Sparkles },
+          ].map((item) => (
+            <button
+              key={item.id}
+              onClick={() => {
+                setView(item.id);
+                if (window.innerWidth < 1024) setSidebarOpen(false);
+              }}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium text-[0.9rem] ${
+                view === item.id
+                  ? "bg-indigo-500/20 text-indigo-100 shadow-sm border border-indigo-500/20"
+                  : "text-indigo-200/60 hover:text-white hover:bg-white/5 border border-transparent"
+              }`}
+            >
+              <item.icon
+                className={`w-5 h-5 ${view === item.id ? "text-[#F25A38]" : ""}`}
+              />{" "}
+              {item.label}
+            </button>
+          ))}
+
+          <div className="mt-8 mb-3 px-4 text-xs font-bold tracking-widest text-indigo-400/50 uppercase">
+            Filters
+          </div>
+          <button
+            onClick={() => {
+              setActiveCategory(null);
+              setView("library");
+              if (window.innerWidth < 1024) setSidebarOpen(false);
+            }}
+            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all text-[0.9rem] ${
+              !activeCategory && view === "library"
+                ? "bg-indigo-500/20 text-indigo-100 border border-indigo-500/20"
+                : "text-indigo-200/60 hover:bg-white/5 hover:text-white border border-transparent"
+            }`}
+          >
+            <Layers className="w-4 h-4" /> All Categories
+            <span className="ml-auto text-xs font-mono opacity-60 bg-black/40 px-2 py-0.5 rounded-md border border-indigo-500/20">
+              {docs.length}
+            </span>
+          </button>
+
+          {Object.entries(CATS).map(([key, cat]) => {
+            const CatIcon = cat.icon;
+            const isActive = activeCategory === key && view === "library";
+            const count = docs.filter((d) => d.category === key).length;
+            return (
+              <button
+                key={key}
+                onClick={() => {
+                  setActiveCategory(key);
+                  setView("library");
+                  if (window.innerWidth < 1024) setSidebarOpen(false);
+                }}
+                className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all text-[0.9rem] ${
+                  isActive
+                    ? "bg-indigo-500/20 text-indigo-100 border border-indigo-500/20"
+                    : "text-indigo-200/60 hover:bg-white/5 hover:text-white border border-transparent"
+                }`}
+              >
+                <CatIcon
+                  className="w-4 h-4"
+                  style={{ color: isActive ? cat.color : undefined }}
+                />{" "}
+                {cat.label}
+                <span className="ml-auto text-xs font-mono opacity-60 bg-black/40 px-2 py-0.5 rounded-md border border-indigo-500/20">
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+        </nav>
+      </aside>
+
+      {/* Main Content */}
+      <main className="flex-1 flex flex-col min-w-0 relative z-10 h-[100dvh]">
+        {/* Header Bar */}
+        <header className="h-16 glass-panel border-b border-indigo-500/10 flex items-center justify-between px-4 lg:px-8 shrink-0 z-30">
+          <div className="flex items-center gap-4 flex-1">
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="lg:hidden p-2 text-indigo-200/70 hover:text-white bg-indigo-500/10 rounded-xl border border-indigo-500/20 transition-colors"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+
+            <div className="relative max-w-md w-full hidden md:block">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-indigo-300/50" />
+              <input
+                type="text"
+                placeholder="Search the vault..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  if (view !== "library") setView("library");
+                }}
+                className="w-full bg-black/40 border border-indigo-500/20 text-sm text-indigo-100 rounded-xl py-2.5 pl-10 pr-4 focus:outline-none focus:border-[#F25A38]/50 transition-colors placeholder-indigo-300/30 shadow-inner"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-indigo-300/50 hover:text-white"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 lg:gap-3">
+            <label className="flex items-center gap-2 px-3 py-2 lg:px-4 text-sm rounded-xl text-indigo-200 hover:text-white hover:bg-indigo-500/20 cursor-pointer transition-all border border-transparent hover:border-indigo-500/30">
+              <Upload className="w-4 h-4" />{" "}
+              <span className="hidden sm:inline">Import</span>
+              <input
+                type="file"
+                accept=".md,.txt"
+                multiple
+                onChange={(e) => {
+                  handleUploadFiles(e.target.files);
+                  e.target.value = "";
+                }}
+                className="hidden"
+              />
+            </label>
+            <button
+              onClick={() => createDoc("agent")}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-xl text-white bg-[#F25A38] hover:bg-[#E04826] transition-all shadow-[0_0_15px_rgba(242,90,56,0.3)]"
+            >
+              <Plus className="w-4 h-4" />{" "}
+              <span className="hidden sm:inline">Create</span>
+            </button>
+          </div>
+        </header>
+
+        {/* Dynamic Views */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden relative scroll-smooth">
+          {/* --- DASHBOARD VIEW --- */}
+          {view === "dashboard" && (
+            <div className="max-w-6xl mx-auto p-4 md:p-8 lg:p-12 pb-20">
+              <div className="mb-8 lg:mb-12">
+                <h1 className="font-bebas text-4xl md:text-5xl tracking-wide text-white mb-2">
+                  System{" "}
+                  <span className="text-[#F25A38] drop-shadow-sm">
+                    Overview
+                  </span>
+                </h1>
+                <p className="text-indigo-200/60 text-sm md:text-base">
+                  Metrics and quick access for your configured protocols.
+                </p>
+              </div>
+
+              {/* Stats Grid */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 lg:gap-5 mb-10">
+                {[
+                  { label: "TOTAL", value: stats.total, color: "text-white" },
+                  {
+                    label: "AGENTS",
+                    value: stats.agents,
+                    color: "text-[#F25A38]",
+                  },
+                  {
+                    label: "SKILLS",
+                    value: stats.skills,
+                    color: "text-[#8B5CF6]",
+                  },
+                  {
+                    label: "TEMPLATES",
+                    value: stats.templates,
+                    color: "text-[#14B8A6]",
+                  },
+                ].map((s, i) => (
+                  <div
+                    key={i}
+                    className="glass-card rounded-2xl p-5 flex flex-col justify-between h-28 lg:h-32 border-t-indigo-400/10 border-l-indigo-400/10"
+                  >
+                    <div className="font-bebas text-xs lg:text-sm tracking-widest text-indigo-300/50">
+                      {s.label}
+                    </div>
+                    <div className={`font-bebas text-3xl lg:text-4xl ${s.color}`}>
+                      {s.value}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <h2 className="font-bebas text-2xl tracking-wide text-indigo-100 mb-4 lg:mb-6">
+                Quick Initialize
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 mb-10">
+                {Object.entries(CATS).map(([key, cat]) => {
+                  const CatIcon = cat.icon;
+                  return (
+                    <button
+                      key={key}
+                      onClick={() => createDoc(key)}
+                      className="glass-card rounded-2xl p-4 lg:p-5 flex items-center gap-4 text-left group"
+                    >
+                      <div
+                        className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110 shrink-0 border border-white/5"
+                        style={{ backgroundColor: `${cat.color}20` }}
+                      >
+                        <CatIcon
+                          className="w-5 h-5 lg:w-6 lg:h-6"
+                          style={{ color: cat.color }}
+                        />
+                      </div>
+                      <div>
+                        <div className="font-bold text-sm text-indigo-100 group-hover:text-white transition-colors">
+                          {cat.singular}
+                        </div>
+                        <div className="text-xs text-indigo-300/50">
+                          Create new
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* --- LIBRARY VIEW --- */}
+          {view === "library" && (
+            <div className="max-w-7xl mx-auto p-4 md:p-8 lg:p-10 pb-20">
+              <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+                <div>
+                  <h1 className="font-bebas text-4xl tracking-wide text-white">
+                    {activeCategory
+                      ? CATS[activeCategory].label
+                      : "All Vaults"}
+                  </h1>
+                  <p className="text-indigo-200/60 text-sm mt-1">
+                    {filteredDocs.length} documents found
+                  </p>
+                </div>
+
+                {/* Mobile inline search */}
+                <div className="md:hidden relative w-full">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-indigo-300/50" />
+                  <input
+                    type="text"
+                    placeholder="Search..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full bg-black/40 border border-indigo-500/20 text-sm text-indigo-100 rounded-xl py-3 pl-10 pr-4 focus:outline-none focus:border-[#F25A38]/50 shadow-inner"
+                  />
+                </div>
+              </div>
+
+              {filteredDocs.length === 0 ? (
+                <div className="py-24 flex flex-col items-center justify-center text-center border border-dashed border-indigo-500/20 rounded-3xl bg-black/20 mx-2 shadow-inner">
+                  <Search className="w-12 h-12 text-indigo-500/30 mb-4" />
+                  <h3 className="font-bebas text-2xl text-indigo-200 mb-2">
+                    Vault Empty
+                  </h3>
+                  <p className="text-indigo-300/50 text-sm">
+                    No matching protocols found.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-5">
+                  {filteredDocs.map((doc) => {
+                    const cat = CATS[doc.category];
+                    const CatIcon = cat.icon;
+                    return (
+                      <div
+                        key={doc.id}
+                        onClick={() => {
+                          setEditing(doc);
+                          setView("editor");
+                        }}
+                        className="glass-card rounded-2xl overflow-hidden cursor-pointer group flex flex-col h-[200px] lg:h-[220px]"
+                      >
+                        <div
+                          className="h-1 w-full"
+                          style={{
+                            background: `linear-gradient(90deg, ${cat.color}, transparent)`,
+                          }}
+                        />
+                        <div className="p-4 lg:p-5 flex flex-col flex-1">
+                          <div className="flex justify-between items-start mb-3">
+                            <div
+                              className="p-2 rounded-lg border border-white/5"
+                              style={{
+                                backgroundColor: `${cat.color}15`,
+                                color: cat.color,
+                              }}
+                            >
+                              <CatIcon className="w-4 h-4" />
+                            </div>
+                            <span className="text-[10px] lg:text-xs text-indigo-300/50 font-mono">
+                              {ago(doc.updatedAt)}
+                            </span>
+                          </div>
+
+                          <h3 className="font-bold text-base lg:text-lg text-indigo-50 mb-1 line-clamp-1 group-hover:text-[#F25A38] transition-colors">
+                            {doc.name}
+                          </h3>
+                          <p className="text-xs lg:text-sm text-indigo-200/60 line-clamp-2 mb-4 flex-1">
+                            {doc.description || "No description provided."}
+                          </p>
+
+                          <div className="flex flex-wrap gap-2 mt-auto">
+                            {doc.tags.slice(0, 3).map((tag) => (
+                              <span
+                                key={tag}
+                                className="text-[9px] lg:text-[10px] uppercase tracking-wider font-bold px-2 py-1 bg-indigo-500/10 border border-indigo-500/20 rounded-md text-indigo-300"
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* --- EDITOR VIEW --- */}
+          {view === "editor" && editing && (
+            <div className="flex flex-col h-full">
+              {/* Editor Toolbar */}
+              <div className="glass-panel p-2 lg:p-4 flex flex-wrap items-center gap-2 lg:gap-3 border-b border-indigo-500/20 shrink-0 z-20 sticky top-0 bg-[#0a0810]/80">
+                <button
+                  onClick={() => {
+                    saveDoc(editing);
+                    setView("library");
+                  }}
+                  className="p-2 text-indigo-300 hover:text-white rounded-lg hover:bg-indigo-500/20 transition-colors"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+
+                <select
+                  value={editing.category}
+                  onChange={(e) =>
+                    setEditing({ ...editing, category: e.target.value })
+                  }
+                  className="bg-black/40 border border-indigo-500/20 text-xs text-indigo-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#F25A38]/50 uppercase tracking-widest font-bold hidden sm:block"
+                >
+                  {Object.entries(CATS).map(([k, v]) => (
+                    <option key={k} value={k}>
+                      {v.singular}
+                    </option>
+                  ))}
+                </select>
+
+                <input
+                  value={editing.name}
+                  onChange={(e) =>
+                    setEditing({ ...editing, name: e.target.value })
+                  }
+                  className="flex-1 bg-transparent border-none text-base lg:text-lg font-bold text-white focus:outline-none placeholder-indigo-300/40 min-w-[120px] px-1"
+                  placeholder="Document Title"
+                />
+
+                {/* Mobile View Toggles */}
+                <div className="flex bg-black/40 rounded-lg p-1 border border-indigo-500/20 lg:hidden">
+                  <button
+                    onClick={() => setMobileEditorTab("edit")}
+                    className={`px-3 py-1.5 rounded-md text-xs font-bold tracking-wider ${
+                      mobileEditorTab === "edit"
+                        ? "bg-indigo-500/30 text-white"
+                        : "text-indigo-300/50"
+                    }`}
+                  >
+                    <Edit3 className="w-3.5 h-3.5 inline-block mr-1" /> Edit
+                  </button>
+                  <button
+                    onClick={() => setMobileEditorTab("preview")}
+                    className={`px-3 py-1.5 rounded-md text-xs font-bold tracking-wider ${
+                      mobileEditorTab === "preview"
+                        ? "bg-indigo-500/30 text-white"
+                        : "text-indigo-300/50"
+                    }`}
+                  >
+                    <Eye className="w-3.5 h-3.5 inline-block mr-1" /> Preview
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-1 sm:gap-2 ml-auto">
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(editing.content);
+                      showToast("Copied to clipboard", "success");
+                    }}
+                    className="p-2 text-indigo-300/60 hover:text-white hover:bg-indigo-500/10 rounded-lg transition-colors"
+                    title="Copy content"
+                  >
+                    <Copy className="w-4 h-4 sm:w-5 sm:h-5" />
+                  </button>
+                  <button
+                    onClick={() => {
+                      const blob = new Blob([editing.content], {
+                        type: "text/markdown",
+                      });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      a.href = url;
+                      a.download = `${editing.name
+                        .replace(/\s+/g, "-")
+                        .toLowerCase()}.md`;
+                      a.click();
+                      URL.revokeObjectURL(url);
+                      showToast("Downloaded", "success");
+                    }}
+                    className="p-2 text-indigo-300/60 hover:text-white hover:bg-indigo-500/10 rounded-lg transition-colors"
+                    title="Download .md"
+                  >
+                    <Download className="w-4 h-4 sm:w-5 sm:h-5" />
+                  </button>
+                  <button
+                    onClick={() => {
+                      setEditing({ ...editing, favorite: !editing.favorite });
+                      setDocs((p) =>
+                        p.map((d) =>
+                          d.id === editing.id
+                            ? { ...d, favorite: !d.favorite }
+                            : d
+                        )
+                      );
+                    }}
+                    className="p-2 text-indigo-300/60 hover:text-amber-400 hover:bg-amber-500/10 rounded-lg transition-colors"
+                    title="Favorite"
+                  >
+                    <Star
+                      className={`w-4 h-4 sm:w-5 sm:h-5 ${
+                        editing.favorite ? "fill-amber-400 text-amber-400" : ""
+                      }`}
+                    />
+                  </button>
+                  <button
+                    onClick={() => deleteDoc(editing.id)}
+                    className="p-2 text-indigo-300/60 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
+                  </button>
+                  <button
+                    onClick={() => saveDoc(editing)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-sm font-medium text-white bg-indigo-500/20 hover:bg-indigo-500/40 border border-indigo-500/30 transition-all"
+                  >
+                    <Save className="w-4 h-4" />{" "}
+                    <span className="hidden sm:inline">Save</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Meta Inputs */}
+              <div className="p-2 sm:p-3 bg-black/20 border-b border-indigo-500/10 flex flex-col sm:flex-row gap-2 shrink-0">
+                <input
+                  value={editing.description || ""}
+                  onChange={(e) =>
+                    setEditing({ ...editing, description: e.target.value })
+                  }
+                  placeholder="Brief description..."
+                  className="flex-1 bg-transparent border-none text-xs sm:text-sm text-indigo-200/80 focus:outline-none px-2"
+                />
+                <div className="flex items-center gap-2 px-2 w-full sm:w-[300px]">
+                  <FileText className="w-3 h-3 text-indigo-400/50 shrink-0" />
+                  <input
+                    value={editing.tags.join(", ")}
+                    onChange={(e) =>
+                      setEditing({
+                        ...editing,
+                        tags: e.target.value
+                          .split(",")
+                          .map((t) => t.trim())
+                          .filter((t) => t),
+                      })
+                    }
+                    placeholder="Tags (comma separated)"
+                    className="w-full bg-transparent border-none text-xs text-[#F25A38] focus:outline-none placeholder-indigo-400/40"
+                  />
+                </div>
+              </div>
+
+              {/* Responsive Workspace */}
+              <div className="flex-1 flex flex-col lg:flex-row overflow-hidden bg-[#05040a]/40 shadow-inner">
+                {/* Textarea Pane */}
+                <div
+                  className={`flex-1 flex-col border-r border-indigo-500/10 ${
+                    mobileEditorTab === "edit" || mobileEditorTab === "split"
+                      ? "flex"
+                      : "hidden"
+                  }`}
+                >
+                  <textarea
+                    value={editing.content}
+                    onChange={(e) =>
+                      setEditing({ ...editing, content: e.target.value })
+                    }
+                    className="md-editor flex-1 bg-transparent text-indigo-100 font-mono text-[13px] sm:text-sm leading-relaxed p-4 sm:p-6 w-full hide-scrollbar"
+                    spellCheck={false}
+                    placeholder="# System Directives..."
+                  />
+                </div>
+
+                {/* Preview Pane */}
+                <div
+                  className={`flex-1 flex-col overflow-y-auto bg-[#0a0812]/60 p-4 sm:p-6 lg:p-10 relative ${
+                    mobileEditorTab === "preview" ||
+                    mobileEditorTab === "split"
+                      ? "flex"
+                      : "hidden"
+                  }`}
+                >
+                  <div className="absolute top-3 right-4 lg:top-4 lg:right-6 font-bebas text-xs lg:text-sm tracking-widest text-indigo-400/40">
+                    RENDERED
+                  </div>
+                  <div
+                    className="pb-20"
+                    dangerouslySetInnerHTML={{
+                      __html: renderMarkdown(editing.content),
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* --- AI GENERATE VIEW --- */}
+          {view === "ai" && (
+            <div className="max-w-3xl mx-auto p-4 md:p-8 lg:p-12 pb-20">
+              <div className="mb-8">
+                <h1 className="font-bebas text-4xl lg:text-5xl tracking-wide text-white mb-2 flex items-center gap-3">
+                  <Sparkles className="w-8 h-8 text-[#F25A38]" /> Forge
+                </h1>
+                <p className="text-indigo-200/60 text-sm lg:text-base">
+                  Generate agent instructions and skill pipelines with AI.
+                </p>
+              </div>
+
+              {/* Type Selector */}
+              <div className="flex gap-2 mb-6 overflow-x-auto pb-2 hide-scrollbar">
+                {Object.entries(CATS).map(([key, cat]) => (
+                  <button
+                    key={key}
+                    onClick={() => setAiDocType(key)}
+                    className={`px-4 py-2.5 rounded-xl text-xs font-bold tracking-wider uppercase transition-all whitespace-nowrap shrink-0 border ${
+                      aiDocType === key
+                        ? "bg-[#F25A38] text-white shadow-[0_0_15px_rgba(242,90,56,0.4)] border-[#F25A38]"
+                        : "glass-panel text-indigo-300/70 hover:text-white border-transparent hover:border-indigo-500/30"
+                    }`}
+                  >
+                    {cat.singular}
+                  </button>
+                ))}
+              </div>
+
+              {/* Input Area */}
+              <div className="glass-card rounded-2xl overflow-hidden mb-8 shadow-2xl border-indigo-500/20">
+                <textarea
+                  value={aiPrompt}
+                  onChange={(e) => setAiPrompt(e.target.value)}
+                  placeholder={`Describe the ${CATS[aiDocType].singular.toLowerCase()} requirements...\n\ne.g., "Create a frontend architect focused on Tailwind defaults and React performance."`}
+                  className="w-full h-32 lg:h-40 bg-black/20 p-5 text-sm lg:text-base text-white focus:outline-none resize-none placeholder-indigo-300/30 md-editor"
+                />
+                <div className="bg-[#0b0a12] p-3 lg:p-4 border-t border-indigo-500/20 flex justify-between items-center">
+                  <span className="text-[10px] lg:text-xs text-indigo-400/50 font-mono flex items-center gap-2">
+                    <Wand2 className="w-3 h-3" /> AI ASSIST
+                  </span>
+                  <button
+                    onClick={generateAI}
+                    disabled={aiLoading || !aiPrompt.trim()}
+                    className={`flex items-center gap-2 px-5 py-2 rounded-xl text-xs lg:text-sm font-bold tracking-wider uppercase transition-all ${
+                      aiLoading || !aiPrompt.trim()
+                        ? "bg-indigo-500/10 text-indigo-400/30 cursor-not-allowed border border-transparent"
+                        : "bg-[#F25A38] text-white hover:bg-[#E04826] hover:shadow-[0_0_20px_rgba(242,90,56,0.5)] border border-[#F25A38]"
+                    }`}
+                  >
+                    {aiLoading ? (
+                      <span className="animate-pulse">Forging...</span>
+                    ) : (
+                      "Generate"
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Result Area */}
+              {aiResult && (
+                <div className="glass-panel rounded-2xl p-4 lg:p-6 border border-[#F25A38]/40 shadow-2xl bg-black/40">
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6 pb-4 border-b border-indigo-500/20">
+                    <h3 className="font-bebas text-xl text-[#F25A38] tracking-widest drop-shadow-[0_0_8px_rgba(242,90,56,0.3)]">
+                      OUTPUT PREVIEW
+                    </h3>
+                    <div className="flex gap-2 w-full sm:w-auto">
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(aiResult);
+                          showToast("Copied to clipboard");
+                        }}
+                        className="flex-1 sm:flex-none px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider bg-indigo-500/10 hover:bg-indigo-500/30 text-indigo-200 border border-indigo-500/20 transition-colors"
+                      >
+                        Copy
+                      </button>
+                      <button
+                        onClick={() => {
+                          const titleMatch = aiResult.match(/^#\s+(.+)$/m);
+                          const doc: Doc = {
+                            id: uid(),
+                            name: titleMatch
+                              ? titleMatch[1]
+                              : `Generated ${CATS[aiDocType].singular}`,
+                            category: aiDocType,
+                            description: "AI Generated",
+                            content: aiResult,
+                            tags: ["ai-generated"],
+                            favorite: false,
+                            createdAt: now(),
+                            updatedAt: now(),
+                            version: 1,
+                          };
+                          setDocs((p) => [doc, ...p]);
+                          setAiResult("");
+                          setAiPrompt("");
+                          setView("library");
+                          setActiveCategory(aiDocType);
+                          showToast("Added to Vault", "success");
+                        }}
+                        className="flex-1 sm:flex-none px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider bg-[#F25A38]/20 text-[#F25A38] hover:bg-[#F25A38]/30 border border-[#F25A38]/30 transition-colors"
+                      >
+                        Save
+                      </button>
+                    </div>
+                  </div>
+                  <div
+                    className="text-sm text-indigo-100"
+                    dangerouslySetInnerHTML={{
+                      __html: renderMarkdown(aiResult),
+                    }}
+                  />
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </main>
+    </div>
+  );
+}

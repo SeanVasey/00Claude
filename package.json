@@ -1,14 +1,32 @@
 {
   "name": "00claude",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
-  "description": "Baseline repository with quality, governance, and CI safeguards.",
+  "description": "The Not-so Secret Agent — A library and IDE for Agent Skills, AGENTS.md, and CLAUDE.md.",
   "scripts": {
-    "lint:md": "markdownlint-cli2 \"**/*.md\"",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "lint:md": "markdownlint-cli2 \"**/*.md\" \"!node_modules\"",
     "test:smoke": "./scripts/smoke-check.sh",
     "test": "npm run lint:md && npm run test:smoke"
   },
+  "dependencies": {
+    "lucide-react": "^0.577.0",
+    "next": "16.1.6",
+    "react": "19.2.3",
+    "react-dom": "19.2.3"
+  },
   "devDependencies": {
-    "markdownlint-cli2": "^0.21.0"
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.1.6",
+    "markdownlint-cli2": "^0.21.0",
+    "tailwindcss": "^4",
+    "typescript": "^5"
   }
 }
