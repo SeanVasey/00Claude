@@ -24,5 +24,11 @@ jobs:
       - name: Lint markdown
         run: npm run lint:md
 
+      - name: Lint code
+        run: npm run lint
+
       - name: Smoke check
         run: npm run test:smoke
+
+      - name: Build
+        run: npm run build

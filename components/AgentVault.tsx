@@ -342,7 +342,18 @@ export default function AgentVault() {
   // Navigation & State
   const [hasEntered, setHasEntered] = useState(false);
   const [view, setView] = useState("dashboard");
-  const [docs, setDocs] = useState<Doc[]>([]);
+  const [docs, setDocs] = useState<Doc[]>(() => {
+    if (typeof window === "undefined") return SEED_DOCS;
+    const saved = localStorage.getItem("agentvault-docs");
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        return SEED_DOCS;
+      }
+    }
+    return SEED_DOCS;
+  });
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [editing, setEditing] = useState<Doc | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -368,19 +379,8 @@ export default function AgentVault() {
     []
   );
 
-  // Initialization
+  // Responsive layout
   useEffect(() => {
-    const saved = localStorage.getItem("agentvault-docs");
-    if (saved) {
-      try {
-        setDocs(JSON.parse(saved));
-      } catch {
-        setDocs(SEED_DOCS);
-      }
-    } else {
-      setDocs(SEED_DOCS);
-    }
-
     const handleResize = () => {
       if (window.innerWidth >= 1024) {
         setMobileEditorTab("split");
