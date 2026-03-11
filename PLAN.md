@@ -40,6 +40,7 @@ Supabase persistence. Artifact mode deferred to Phase 2.
 9. Verify `npm run dev` builds successfully
 
 ### Files Created
+
 - `app/layout.tsx` — root layout with html/body, metadata
 - `app/page.tsx` — landing page placeholder
 - `app/globals.css` — Tailwind directives + custom CSS tokens
@@ -50,6 +51,7 @@ Supabase persistence. Artifact mode deferred to Phase 2.
 - `public/` — static assets directory
 
 ### Files Modified
+
 - `package.json` — add Next.js deps and scripts
 - `.gitignore` — add `.next/`, `out/`
 - `vercel.json` — add framework config
@@ -86,6 +88,7 @@ Supabase persistence. Artifact mode deferred to Phase 2.
    - `components/layout/TopBar.tsx` — header bar with user menu
 
 ### Files Created
+
 - `components.json` — shadcn/ui config
 - `components/ui/*.tsx` — shadcn components
 - `components/brand/GlassPanel.tsx`
@@ -98,6 +101,7 @@ Supabase persistence. Artifact mode deferred to Phase 2.
 - `lib/utils.ts` — shadcn cn() utility
 
 ### Files Modified
+
 - `app/globals.css` — design tokens, glassmorphism utilities
 - `tailwind.config.ts` — extended theme colors and animations
 - `package.json` — new deps (class-variance-authority, clsx, tailwind-merge, lucide-react)
@@ -138,6 +142,7 @@ Supabase persistence. Artifact mode deferred to Phase 2.
 9. Document both local (`supabase start`) and remote setup in docs
 
 ### Files Created
+
 - `lib/supabase/client.ts`
 - `lib/supabase/server.ts`
 - `lib/supabase/middleware.ts`
@@ -152,6 +157,7 @@ Supabase persistence. Artifact mode deferred to Phase 2.
 - `lib/database.types.ts` — generated or manual Supabase types
 
 ### Files Modified
+
 - `package.json` — add Supabase deps + gen script
 - `.env.example` — add NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY
 - `.gitignore` — add supabase/.temp/
@@ -185,6 +191,7 @@ Supabase persistence. Artifact mode deferred to Phase 2.
    - Function + trigger to auto-create profile on `auth.users` insert
 
 ### Files Created
+
 - `app/(marketing)/login/page.tsx`
 - `app/(marketing)/signup/page.tsx`
 - `app/auth/callback/route.ts`
@@ -197,6 +204,7 @@ Supabase persistence. Artifact mode deferred to Phase 2.
 - `lib/auth/context.tsx` — auth context provider
 
 ### Files Modified
+
 - `middleware.ts` — add route protection logic
 - `app/(app)/layout.tsx` — wrap with auth provider
 - `app/(app)/settings/page.tsx` — profile management
@@ -239,6 +247,7 @@ Supabase persistence. Artifact mode deferred to Phase 2.
    - `lib/audit.ts` — log actions to audit_log table
 
 ### Files Created
+
 - `lib/actions/assets.ts`
 - `lib/actions/versions.ts`
 - `lib/assets/hashing.ts`
@@ -292,6 +301,7 @@ Supabase persistence. Artifact mode deferred to Phase 2.
    - Frontmatter/YAML validation for manifest blocks
 
 ### Files Created
+
 - `components/editor/MonacoEditor.tsx`
 - `components/editor/MarkdownPreview.tsx`
 - `components/editor/DiffViewer.tsx`
@@ -301,6 +311,7 @@ Supabase persistence. Artifact mode deferred to Phase 2.
 - `app/(app)/assets/[assetId]/edit/page.tsx`
 
 ### Files Modified
+
 - `package.json` — add @monaco-editor/react, react-markdown, remark-gfm, rehype-highlight
 
 ---
@@ -334,6 +345,7 @@ Supabase persistence. Artifact mode deferred to Phase 2.
    - `app/(app)/collections/[collectionId]/page.tsx` — collection detail
 
 ### Files Created
+
 - `supabase/migrations/0004_search.sql`
 - `lib/search/fts.ts`
 - `app/api/search/route.ts`
@@ -374,6 +386,7 @@ Supabase persistence. Artifact mode deferred to Phase 2.
    - Streaming response display
 
 ### Files Created
+
 - `lib/anthropic/client.ts`
 - `lib/anthropic/models.ts`
 - `lib/anthropic/streaming.ts`
@@ -383,6 +396,7 @@ Supabase persistence. Artifact mode deferred to Phase 2.
 - `components/anthropic/ModelBadge.tsx`
 
 ### Files Modified
+
 - `package.json` — add @anthropic-ai/sdk
 - `.env.example` — add ANTHROPIC_API_KEY
 - `components/editor/EditorToolbar.tsx` — add test button
@@ -412,6 +426,7 @@ Supabase persistence. Artifact mode deferred to Phase 2.
    - Bundle: all selected assets in repo-ready tree
 
 ### Files Created
+
 - `lib/assets/export.ts`
 - `lib/assets/manifests.ts`
 - `app/api/export/bundle/route.ts`
@@ -420,6 +435,7 @@ Supabase persistence. Artifact mode deferred to Phase 2.
 - `components/export/CopyBlock.tsx`
 
 ### Files Modified
+
 - `package.json` — add jszip
 
 ---
@@ -439,6 +455,7 @@ Supabase persistence. Artifact mode deferred to Phase 2.
 4. Use brand components (GlassPanel, SpectrumGlow, BeamAccent) throughout
 
 ### Files Created
+
 - `app/(marketing)/layout.tsx`
 - `app/(marketing)/page.tsx` (update from Phase 1 placeholder)
 - `app/(marketing)/pricing/page.tsx`
@@ -472,6 +489,7 @@ Supabase persistence. Artifact mode deferred to Phase 2.
 7. Update `.env.example` with all env vars and comments
 
 ### Files Modified
+
 - `.github/workflows/ci.yml`
 - `scripts/smoke-check.sh`
 - `README.md`
@@ -480,6 +498,7 @@ Supabase persistence. Artifact mode deferred to Phase 2.
 - `.env.example`
 
 ### Files Created
+
 - `docs/PRD.md`
 - `docs/ARCHITECTURE.md`
 - `docs/SCHEMAS.md`
@@ -488,7 +507,7 @@ Supabase persistence. Artifact mode deferred to Phase 2.
 
 ## Dependency Graph
 
-```
+```text
 Phase 1 (Next.js scaffold)
   |
   v
@@ -536,7 +555,7 @@ Phases 6, 7, 8, and 9 can be parallelized once Phase 5 is complete.
 | 9     | ~6        | ~1             |
 | 10    | ~3        | ~0             |
 | 11    | ~3        | ~7             |
-| **Total** | **~100** | **~24**    |
+| **Total** | **~100**  | **~24**        |
 
 ---
 
