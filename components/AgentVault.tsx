@@ -9,155 +9,7 @@ import {
   BookOpen, Eye, Edit3, ChevronLeftCircle,
 } from "lucide-react";
 
-// ═══════════════════════════════════════════════════════════════════════
-// GLOBAL STYLES & FONTS
-// ═══════════════════════════════════════════════════════════════════════
-const globalStyles = `
-  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Reddit+Sans:ital,wght@0,200..900;1,200..900&family=JetBrains+Mono:wght@400;500&display=swap');
-
-  :root {
-    --brand-red: #F25A38;
-    --brand-blue: #6366f1;
-    --border-subtle: rgba(140, 160, 255, 0.08);
-    --border-glow: rgba(140, 160, 255, 0.15);
-    --accent-deep: #6366f1;
-    --accent-dim: #8B5CF6;
-    --accent-primary: #F25A38;
-    --accent-glow-strong: rgba(242, 90, 56, 0.4);
-    --text-secondary: #94a3c8;
-    --text-muted: rgba(148, 163, 200, 0.5);
-    --bg-card: rgba(20, 22, 35, 0.4);
-  }
-
-  body {
-    background-color: #0b0a10;
-    color: #f8fafc;
-    font-family: 'Reddit Sans', sans-serif;
-    -webkit-font-smoothing: antialiased;
-    overscroll-behavior-y: none;
-  }
-
-  .font-bebas { font-family: 'Bebas Neue', sans-serif; }
-  .font-mono { font-family: 'JetBrains Mono', monospace; }
-
-  ::-webkit-scrollbar { width: 6px; height: 6px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: rgba(148, 163, 200, 0.15); border-radius: 4px; }
-  ::-webkit-scrollbar-thumb:hover { background: rgba(99, 102, 241, 0.4); }
-
-  .hide-scrollbar::-webkit-scrollbar { display: none; }
-  .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
-  .glass-panel {
-    background: rgba(30, 32, 48, 0.3);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(140, 160, 255, 0.08);
-  }
-
-  .glass-card {
-    background: rgba(20, 22, 35, 0.4);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(140, 160, 255, 0.06);
-    transition: all 0.2s ease;
-  }
-  @media (hover: hover) {
-    .glass-card:hover {
-      background: rgba(40, 45, 70, 0.5);
-      border-color: rgba(242, 90, 56, 0.25);
-      transform: translateY(-2px);
-      box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
-    }
-  }
-
-  .md-editor {
-    outline: none !important;
-    box-shadow: none !important;
-    resize: none;
-  }
-
-  /* ═══ VASEY/AI Universal Footer ═══ */
-  .app-footer {
-    margin-top: 56px;
-    padding-top: 32px;
-    border-top: 1px solid var(--border-subtle);
-    text-align: center;
-    animation: fadeInUp 0.8s ease-out 0.8s both;
-  }
-  .footer-divider {
-    width: 48px;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--accent-deep), transparent);
-    margin: 0 auto 28px;
-  }
-  .footer-brand-row {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 20px;
-    margin-bottom: 20px;
-  }
-  .footer-logo {
-    opacity: 0.45;
-    transition: opacity 0.3s ease;
-    display: inline-flex;
-    align-items: center;
-  }
-  .footer-logo:hover {
-    opacity: 0.75;
-    filter: drop-shadow(0 0 6px var(--accent-glow-strong));
-  }
-  .footer-logo-vm {
-    width: 36px;
-    height: 31px;
-  }
-  .footer-logo-vai {
-    width: 48px;
-    height: 48px;
-  }
-  .footer-logo-sep {
-    width: 1px;
-    height: 24px;
-    background: var(--border-glow);
-  }
-  .footer-suite-tag {
-    font-family: 'Reddit Sans', sans-serif;
-    font-size: 12px;
-    font-weight: 500;
-    letter-spacing: 0.25em;
-    text-transform: uppercase;
-    color: var(--text-muted);
-    margin-bottom: 8px;
-  }
-  .footer-app-tag {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    color: var(--text-muted);
-    opacity: 0.7;
-    margin-bottom: 16px;
-  }
-  .footer-copyright {
-    font-family: 'Reddit Sans', sans-serif;
-    font-size: 11px;
-    color: var(--text-muted);
-    opacity: 0.5;
-    line-height: 1.6;
-    padding-bottom: 8px;
-  }
-  .footer-copyright a {
-    color: var(--accent-dim);
-    text-decoration: none;
-    transition: color 0.2s ease;
-  }
-  .footer-copyright a:hover {
-    color: var(--accent-primary);
-  }
-  @keyframes fadeInUp {
-    from { opacity: 0; transform: translateY(20px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-`;
+// Global styles are now in app/globals.css — no inline injection needed.
 
 // ═══════════════════════════════════════════════════════════════════════
 // TYPES
@@ -337,17 +189,20 @@ const SEED_DOCS: Doc[] = [
 ];
 
 // ═══════════════════════════════════════════════════════════════════════
-// ANIMATED AMBIENT BACKGROUND
+// ANIMATED AMBIENT BACKGROUND (throttled to ~30fps)
 // ═══════════════════════════════════════════════════════════════════════
-function AmbientField() {
+function AmbientField({ isActive = true }: { isActive?: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
+    if (!isActive) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     let animationFrameId: number;
+    let lastTime = 0;
+    const frameDuration = 1000 / 30; // ~30fps
 
     interface Particle {
       x: number;
@@ -366,7 +221,7 @@ function AmbientField() {
     window.addEventListener("resize", resize);
     resize();
 
-    const particleCount = window.innerWidth < 768 ? 20 : 35;
+    const particleCount = window.innerWidth < 768 ? 12 : 22;
 
     for (let i = 0; i < particleCount; i++) {
       particles.push({
@@ -379,7 +234,11 @@ function AmbientField() {
       });
     }
 
-    const draw = () => {
+    const draw = (timestamp: number) => {
+      animationFrameId = requestAnimationFrame(draw);
+      if (timestamp - lastTime < frameDuration) return;
+      lastTime = timestamp;
+
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       for (let i = 0; i < particles.length; i++) {
         const p = particles[i];
@@ -390,9 +249,12 @@ function AmbientField() {
 
         for (let j = i + 1; j < particles.length; j++) {
           const p2 = particles[j];
-          const dist = Math.hypot(p.x - p2.x, p.y - p2.y);
-          if (dist < 120) {
-            ctx.strokeStyle = `rgba(99, 102, 241, ${(1 - dist / 120) * 0.15})`;
+          const dx = p.x - p2.x;
+          const dy = p.y - p2.y;
+          const distSq = dx * dx + dy * dy;
+          if (distSq < 10000) { // 100^2 — avoids Math.hypot
+            const dist = Math.sqrt(distSq);
+            ctx.strokeStyle = `rgba(99, 102, 241, ${(1 - dist / 100) * 0.15})`;
             ctx.lineWidth = 0.5;
             ctx.beginPath();
             ctx.moveTo(p.x, p.y);
@@ -408,21 +270,75 @@ function AmbientField() {
           : `rgba(99, 102, 241, ${alpha + 0.1})`;
         ctx.fill();
       }
-      animationFrameId = requestAnimationFrame(draw);
     };
-    draw();
+    animationFrameId = requestAnimationFrame(draw);
     return () => {
       cancelAnimationFrame(animationFrameId);
       window.removeEventListener("resize", resize);
     };
-  }, []);
+  }, [isActive]);
 
   return (
     <canvas
       ref={canvasRef}
       className="fixed inset-0 z-0 pointer-events-none opacity-70"
+      style={{ willChange: "transform" }}
     />
   );
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// TYPING ANIMATION HOOK
+// ═══════════════════════════════════════════════════════════════════════
+const HERO_LINES = [
+  { text: "AGENTS, SKILLS,", accent: false },
+  { text: "AND PROTOCOLS.", accent: false },
+  { text: "FINALLY IN ONE", accent: true },
+  { text: "REPO.", accent: true },
+];
+
+function computeTypingState(cursor: number) {
+  const totalChars = HERO_LINES.reduce((sum, l) => sum + l.text.length, 0);
+  const done = cursor >= totalChars;
+
+  // Build prefix sums to determine line boundaries
+  const prefixSums = [0];
+  for (let i = 0; i < HERO_LINES.length; i++) {
+    prefixSums.push(prefixSums[i] + HERO_LINES[i].text.length);
+  }
+
+  let cursorLineIndex = -1;
+  const lines = HERO_LINES.map((line, i) => {
+    const lineStart = prefixSums[i];
+    const lineEnd = prefixSums[i + 1];
+    if (cursor >= lineEnd) {
+      return { text: line.text, accent: line.accent, visible: true };
+    }
+    if (cursor > lineStart) {
+      cursorLineIndex = i;
+      return { text: line.text.slice(0, cursor - lineStart), accent: line.accent, visible: true };
+    }
+    if (cursor === lineStart && !done) {
+      cursorLineIndex = i;
+      return { text: "", accent: line.accent, visible: true };
+    }
+    return { text: "", accent: line.accent, visible: false };
+  });
+
+  return { lines, done, showCursor: !done, cursorLineIndex };
+}
+
+function useTypingAnimation(isActive: boolean) {
+  const totalChars = HERO_LINES.reduce((sum, l) => sum + l.text.length, 0);
+  const [cursor, setCursor] = useState(0);
+
+  useEffect(() => {
+    if (!isActive || cursor >= totalChars) return;
+    const timeout = setTimeout(() => setCursor((c) => c + 1), 40);
+    return () => clearTimeout(timeout);
+  }, [isActive, cursor, totalChars]);
+
+  return computeTypingState(cursor);
 }
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -642,6 +558,9 @@ export default function AgentVault() {
   const rootBgClasses =
     "bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#1d1a2f] via-[#110e18] to-[#08070b]";
 
+  // Typing animation for hero heading
+  const typing = useTypingAnimation(!hasEntered);
+
   // ═══════════════════════════════════════════════════════════════════
   // RENDER: HERO (LANDING)
   // ═══════════════════════════════════════════════════════════════════
@@ -650,15 +569,14 @@ export default function AgentVault() {
       <div
         className={`min-h-[100dvh] flex flex-col relative overflow-hidden ${rootBgClasses}`}
       >
-        <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
-        <AmbientField />
+        <AmbientField isActive={!hasEntered} />
 
         {/* Glows */}
         <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-indigo-600/10 rounded-full blur-[120px] pointer-events-none mix-blend-screen" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] bg-[#F25A38]/10 rounded-full blur-[150px] pointer-events-none mix-blend-screen" />
 
-        {/* Header */}
-        <header className="relative z-20 flex justify-between items-center p-6 lg:px-12 lg:py-8 w-full max-w-7xl mx-auto">
+        {/* Header — z-30 to stay above hero z-10 */}
+        <header className="relative z-30 flex justify-between items-center p-6 lg:px-12 lg:py-8 w-full max-w-7xl mx-auto">
           <div className="font-bebas text-2xl lg:text-3xl tracking-widest flex items-center gap-2 drop-shadow-md">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#F25A38] to-[#C0392B] flex items-center justify-center shadow-[0_0_15px_rgba(242,90,56,0.6)]">
               <Code2 className="w-5 h-5 text-white" />
@@ -667,35 +585,42 @@ export default function AgentVault() {
             <span className="text-[#F25A38] mt-1">CLAUDE</span>
           </div>
           <div className="flex gap-6 text-sm text-indigo-200/70 font-medium">
-            <button className="hover:text-white transition-colors">Docs</button>
+            <button onClick={() => enterApp("library")} className="hover:text-white transition-colors">Docs</button>
           </div>
         </header>
 
-        {/* Hero Content */}
-        <main className="relative z-20 flex-1 flex flex-col items-center justify-center text-center px-6 mt-[-5vh]">
-          <h1 className="font-bebas text-[4.5rem] leading-[0.9] md:text-[7rem] lg:text-[8.5rem] tracking-tight mb-6">
-            <span className="text-white block drop-shadow-sm">
-              AGENTS, SKILLS,
-            </span>
-            <span className="text-white block drop-shadow-sm">
-              AND PROTOCOLS.
-            </span>
-            <span className="text-[#F25A38] block drop-shadow-[0_0_40px_rgba(242,90,56,0.5)]">
-              FINALLY IN ONE
-            </span>
-            <span className="text-[#F25A38] block drop-shadow-[0_0_40px_rgba(242,90,56,0.5)]">
-              REPO.
-            </span>
+        {/* Hero Content — z-10, below header */}
+        <main className="relative z-10 flex-1 flex flex-col items-center justify-center text-center px-6">
+          <h1 className="font-bebas text-[4.5rem] leading-[0.9] md:text-[7rem] lg:text-[8.5rem] tracking-tight mb-6 pointer-events-none min-h-[4lh]">
+            {typing.lines.map((line, i) => (
+              <span
+                key={i}
+                className={`block drop-shadow-sm ${
+                  line.accent
+                    ? "text-[#F25A38] drop-shadow-[0_0_40px_rgba(242,90,56,0.5)]"
+                    : "text-white"
+                }`}
+                style={{ visibility: line.visible ? "visible" : "hidden" }}
+              >
+                {line.text}
+                {typing.showCursor && typing.cursorLineIndex === i && (
+                  <span className="typing-cursor" />
+                )}
+                {!line.visible && "\u00A0"}
+              </span>
+            ))}
           </h1>
 
-          <p className="text-indigo-200/60 text-base md:text-xl leading-relaxed mb-12 max-w-2xl font-light">
-            The ultimate repository for Claude Code and other LLMs. Construct,
-            refine, and deploy agentic capabilities from a single fast,
-            beautiful workspace.
-          </p>
+          <div className={typing.done ? "fade-in-up" : "opacity-0"}>
+            <p className="text-indigo-200/60 text-base md:text-xl leading-relaxed mb-12 max-w-2xl font-light">
+              The ultimate repository for Claude Code and other LLMs. Construct,
+              refine, and deploy agentic capabilities from a single fast,
+              beautiful workspace.
+            </p>
+          </div>
 
-          {/* Entry Bar */}
-          <div className="glass-panel p-2 rounded-[1.25rem] flex flex-col sm:flex-row gap-2 w-full max-w-lg shadow-2xl">
+          {/* Entry Bar — fades in after typing completes */}
+          <div className={`glass-panel p-2 rounded-[1.25rem] flex flex-col sm:flex-row gap-2 w-full max-w-lg shadow-2xl ${typing.done ? "fade-in-up-delayed" : "opacity-0"}`}>
             <button
               onClick={() => enterApp("dashboard")}
               className="flex-1 flex items-center gap-3 bg-black/40 text-indigo-200/50 px-5 py-4 rounded-xl hover:text-white hover:bg-black/60 transition-all border border-indigo-500/10"
@@ -752,7 +677,7 @@ export default function AgentVault() {
             </a>
           </div>
           <div className="footer-suite-tag">A VASEY/AI Production</div>
-          <div className="footer-app-tag">00CLAUDE v0.2.0 &middot; The Not-so Secret Agent</div>
+          <div className="footer-app-tag">00CLAUDE v0.4.0 &middot; The Not-so Secret Agent</div>
           <div className="footer-copyright">
             &copy; 2026 <a href="https://vaseymultimedia.com" target="_blank" rel="noopener noreferrer">VASEY Multimedia</a>. All rights reserved.<br/>
             Designed &amp; engineered by <a href="https://vasey.ai" target="_blank" rel="noopener noreferrer">VASEY/AI</a>
@@ -769,8 +694,7 @@ export default function AgentVault() {
     <div
       className={`flex h-[100dvh] text-white overflow-hidden relative ${rootBgClasses}`}
     >
-      <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
-      <AmbientField />
+      <AmbientField isActive={true} />
 
       {/* Ambient Glow */}
       <div className="absolute top-0 left-[-10%] w-[50%] h-[50%] bg-indigo-600/10 rounded-full blur-[150px] pointer-events-none" />

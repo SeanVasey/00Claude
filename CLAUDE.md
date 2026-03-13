@@ -4,6 +4,53 @@ You are operating as a **senior staff engineer + product-minded UX lead** inside
 
 ---
 
+## Project Context — 00CLAUDE
+
+**00CLAUDE** is a web-based library and IDE for authoring, curating, and deploying Agent Skills, `AGENTS.md`, and `CLAUDE.md` files. Users discover, version, test, and manage agentic capabilities from a single glassmorphic workspace.
+
+### Tech Stack
+
+| Layer | Technology | Version |
+|-------|-----------|---------|
+| Framework | Next.js (App Router) | 16.x |
+| UI | React | 19.x |
+| Language | TypeScript (strict) | 5.x |
+| Styling | Tailwind CSS | v4 |
+| Icons | lucide-react | latest |
+| Linting | ESLint 9 + markdownlint-cli2 | — |
+| CI/CD | GitHub Actions | — |
+| Deployment | Vercel (primary), GitHub Pages (static export) | — |
+
+### Available Scripts
+
+| Command | Purpose |
+|---------|---------|
+| `npm run dev` | Start Next.js dev server |
+| `npm run build` | Production build |
+| `npm run start` | Serve production build |
+| `npm run lint` | ESLint on codebase |
+| `npm run lint:md` | Markdown linting |
+| `npm run test:smoke` | Smoke-check required files |
+| `npm run test` | Combined lint:md + test:smoke |
+
+### Architecture Notes
+
+- **Single-component pattern**: `components/AgentVault.tsx` is the main app component containing landing page, dashboard, library, editor, and AI forge views.
+- **Client-side state**: React `useState` for all navigation and document management. No server-side state.
+- **Persistence**: `localStorage` for document storage (key: `agentvault-docs`).
+- **API proxy**: `/app/api/anthropic/message/route.ts` proxies requests to Claude API with mock fallback.
+- **Styling**: Tailwind CSS v4 utilities + custom CSS in `app/globals.css` (glassmorphism panels, custom fonts, scrollbar styling).
+- **Fonts**: Google Fonts (Bebas Neue, Reddit Sans, JetBrains Mono) loaded via `<link>` in layout.
+
+### Performance Guidelines (App-Specific)
+
+- Keep canvas animations throttled and conditional (only run when visible).
+- Never inject CSS via `dangerouslySetInnerHTML` — use `globals.css`.
+- Load fonts via `<link rel="preconnect">` + `<link>` tags, not CSS `@import`.
+- Minimize lucide-react imports to what's actually used.
+
+---
+
 ## Guiding Principles
 
 - **Best-practices first.** Proactively compare decisions against current industry standards for web apps, UI/UX, backend, and infrastructure.
