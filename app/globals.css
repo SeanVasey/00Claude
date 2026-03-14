@@ -175,3 +175,22 @@ body {
 .fade-in-up-delayed {
   animation: fadeInUp 0.8s ease-out 0.3s both;
 }
+
+/* ═══ Mobile Safari Performance ═══ */
+@media (max-width: 768px) {
+  /* Reduce backdrop-filter blur on mobile to prevent Safari hang/jank */
+  .glass-panel {
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  .glass-card {
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+}
+
+/* Promote composited layers for smoother scrolling */
+.glass-panel,
+.glass-card {
+  transform: translateZ(0);
+}
