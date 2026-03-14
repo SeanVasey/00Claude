@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import Image from "next/image";
 import {
   Bot, Code2, Search, Plus, Upload, Terminal, Wand2,
   ChevronLeft, Save, FileText, Trash2, Layers,
@@ -8,6 +9,23 @@ import {
   CheckCircle2, AlertCircle, Info, LayoutDashboard,
   BookOpen, Eye, Edit3, ChevronLeftCircle,
 } from "lucide-react";
+
+// ═══════════════════════════════════════════════════════════════════════
+// BRAND LOGO COMPONENT
+// ═══════════════════════════════════════════════════════════════════════
+function BrandLogo({ className = "w-8 h-8" }: { className?: string }) {
+  return (
+    <Image
+      src="/logo.svg"
+      alt="00CLAUDE"
+      className={className}
+      width={32}
+      height={32}
+      priority
+      unoptimized
+    />
+  );
+}
 
 // Global styles are now in app/globals.css — no inline injection needed.
 
@@ -221,7 +239,7 @@ function AmbientField({ isActive = true }: { isActive?: boolean }) {
     window.addEventListener("resize", resize);
     resize();
 
-    const particleCount = window.innerWidth < 768 ? 12 : 22;
+    const particleCount = window.innerWidth < 768 ? 6 : 18;
 
     for (let i = 0; i < particleCount; i++) {
       particles.push({
@@ -548,12 +566,12 @@ export default function AgentVault() {
     );
   }, [docs, activeCategory, searchQuery]);
 
-  const stats = {
+  const stats = useMemo(() => ({
     total: docs.length,
     agents: docs.filter((d) => d.category === "agent").length,
     skills: docs.filter((d) => d.category === "skill").length,
     templates: docs.filter((d) => d.category === "template").length,
-  };
+  }), [docs]);
 
   const rootBgClasses =
     "bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#1d1a2f] via-[#110e18] to-[#08070b]";
@@ -571,18 +589,15 @@ export default function AgentVault() {
       >
         <AmbientField isActive={!hasEntered} />
 
-        {/* Glows */}
-        <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-indigo-600/10 rounded-full blur-[120px] pointer-events-none mix-blend-screen" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] bg-[#F25A38]/10 rounded-full blur-[150px] pointer-events-none mix-blend-screen" />
+        {/* Glows — reduced on mobile for Safari perf */}
+        <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-indigo-600/10 rounded-full blur-[60px] md:blur-[120px] pointer-events-none mix-blend-screen" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] bg-[#F25A38]/10 rounded-full blur-[60px] md:blur-[150px] pointer-events-none mix-blend-screen" />
 
         {/* Header — z-30 to stay above hero z-10 */}
         <header className="relative z-30 flex justify-between items-center p-6 lg:px-12 lg:py-8 w-full max-w-7xl mx-auto">
           <div className="font-bebas text-2xl lg:text-3xl tracking-widest flex items-center gap-2 drop-shadow-md">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#F25A38] to-[#C0392B] flex items-center justify-center shadow-[0_0_15px_rgba(242,90,56,0.6)]">
-              <Code2 className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-white mt-1">00</span>
-            <span className="text-[#F25A38] mt-1">CLAUDE</span>
+            <BrandLogo className="w-8 h-8 drop-shadow-[0_0_10px_rgba(242,90,56,0.5)]" />
+            <span className="mt-1"><span className="text-white">00</span><span className="text-[#F25A38]">CLAUDE</span></span>
           </div>
           <div className="flex gap-6 text-sm text-indigo-200/70 font-medium">
             <button onClick={() => enterApp("library")} className="hover:text-white transition-colors">Docs</button>
@@ -694,10 +709,10 @@ export default function AgentVault() {
     <div
       className={`flex h-[100dvh] text-white overflow-hidden relative ${rootBgClasses}`}
     >
-      <AmbientField isActive={true} />
+      <AmbientField isActive={view === "dashboard"} />
 
-      {/* Ambient Glow */}
-      <div className="absolute top-0 left-[-10%] w-[50%] h-[50%] bg-indigo-600/10 rounded-full blur-[150px] pointer-events-none" />
+      {/* Ambient Glow — reduced on mobile for Safari perf */}
+      <div className="absolute top-0 left-[-10%] w-[50%] h-[50%] bg-indigo-600/10 rounded-full blur-[60px] md:blur-[150px] pointer-events-none" />
 
       {/* Toasts */}
       <div className="fixed top-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none">
@@ -744,12 +759,8 @@ export default function AgentVault() {
               <ChevronLeftCircle className="w-3 h-3" /> RETURN TO HOME
             </div>
             <div className="font-bebas text-3xl tracking-widest flex items-center gap-1.5">
-              <span className="text-white group-hover:text-indigo-50 transition-colors">
-                00
-              </span>
-              <span className="text-[#F25A38] drop-shadow-[0_0_15px_rgba(242,90,56,0.6)]">
-                CLAUDE
-              </span>
+              <BrandLogo className="w-7 h-7 drop-shadow-[0_0_10px_rgba(242,90,56,0.5)]" />
+              <span><span className="text-white group-hover:text-indigo-50 transition-colors">00</span><span className="text-[#F25A38] drop-shadow-[0_0_15px_rgba(242,90,56,0.6)]">CLAUDE</span></span>
             </div>
           </div>
 
