@@ -1,6 +1,18 @@
 # Task Plan
 
-## Current Session — 2026-03-13: Fix Landing Page Performance & UI
+## Current Session — 2026-03-23: Update Documentation Standards
+
+### Completed
+
+- [x] Overhaul `CLAUDE.md` with expanded security, CI/CD, project structure, and workflow sections
+- [x] Upgrade `README.md` with logo, shields.io badges, contributing section, and license/security links
+- [x] Update `CHANGELOG.md` with unreleased entries
+- [x] Verify all repo files in good order
+- [x] Run lint and build checks
+
+---
+
+## Previous Session — 2026-03-13: Fix Landing Page Performance & UI
 
 ### Completed
 

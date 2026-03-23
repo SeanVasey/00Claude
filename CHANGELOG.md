@@ -5,6 +5,18 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- Overhauled `CLAUDE.md` with expanded security standards (auth, input
+  validation, API access control, supply chain, production hardening),
+  refined CI/CD section (deployment gates, Vercel/GitHub Pages specifics),
+  updated project structure template, and streamlined workflow orchestration.
+- Upgraded `README.md` with centered logo, shields.io badge row (CI, version,
+  license, framework badges), improved features list, contributing section,
+  and security/license links.
+
 ## [0.4.0] - 2026-03-13
 
 ### Fixed
