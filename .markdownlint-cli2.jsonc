@@ -10,6 +10,10 @@
       "siblings_only": true,
       "allow_different_nesting": true
     },
-    "MD060": false
+    "MD060": false,
+    "MD033": {
+      "allowed_elements": ["p", "h1", "img", "a", "br", "code"]
+    },
+    "MD041": false
   }
 }
