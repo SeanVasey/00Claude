@@ -516,6 +516,17 @@ export default function AgentVault() {
   };
 
   // AI Generation — calls server route or falls back to mock
+  const buildMockContent = (prompt: string, docType: string): string => {
+    const typeName = CATS[docType].singular;
+    const mockTemplates: Record<string, string> = {
+      agent: `# ${typeName}: ${prompt.slice(0, 60)}${prompt.length > 60 ? "..." : ""}\n\n## Role\nYou are a specialized AI agent. ${prompt}\n\n## Capabilities\n- Analyze requirements and context before acting\n- Apply domain-specific best practices\n- Provide structured, actionable outputs\n- Iterate based on feedback\n\n## Instructions\n1. Begin by understanding the full scope of the request\n2. Break complex tasks into clear, sequential steps\n3. Apply relevant expertise and best practices\n4. Validate outputs against the original requirements\n5. Present results in a clean, organized format\n\n## Constraints\n- Stay within your defined scope\n- Ask clarifying questions when requirements are ambiguous\n- Prefer proven approaches over experimental ones\n- Document assumptions and trade-offs\n\n## Output Format\nProvide responses in well-structured markdown with clear headings, code blocks where appropriate, and actionable next steps.`,
+      skill: `# Skill: ${prompt.slice(0, 60)}${prompt.length > 60 ? "..." : ""}\n\n## Description\n${prompt}\n\n## Trigger\nActivate this skill when the user requests tasks related to this domain.\n\n## Steps\n1. **Analyze** — Parse the input and identify key requirements\n2. **Plan** — Outline the approach and identify dependencies\n3. **Execute** — Perform the task following best practices\n4. **Validate** — Verify the output meets the requirements\n5. **Deliver** — Present the result with clear documentation\n\n## Quality Checks\n- [ ] Output matches the stated requirements\n- [ ] Best practices are followed\n- [ ] Edge cases are handled\n- [ ] Documentation is included`,
+      template: `# Project Configuration\n\n## Overview\n${prompt}\n\n## Role\nYou are a senior engineer working on this project. Follow all conventions and standards defined below.\n\n## Principles\n- Write clean, maintainable code\n- Prefer simplicity over cleverness\n- Test before you ship\n- Document decisions, not obvious code\n\n## Verification Protocol\n1. Lint and format all changed files\n2. Run the test suite\n3. Verify the build succeeds\n4. Review your own diff before committing\n\n## Commit Standards\n- Use conventional commits: \`feat:\`, \`fix:\`, \`chore:\`, \`docs:\`\n- Keep commits focused and atomic\n- Write meaningful commit messages`,
+      prompt: `# Prompt: ${prompt.slice(0, 60)}${prompt.length > 60 ? "..." : ""}\n\n## Objective\n${prompt}\n\n## Context\nProvide any relevant background information, constraints, or preferences that shape the expected output.\n\n## Instructions\n1. Carefully read and understand the objective\n2. Consider edge cases and constraints\n3. Structure the response clearly\n4. Include examples where helpful\n\n## Expected Output\nA well-structured response that directly addresses the objective with practical, actionable content.\n\n## Evaluation Criteria\n- Relevance to the stated objective\n- Clarity and organization\n- Practical applicability\n- Completeness`,
+    };
+    return mockTemplates[docType] || mockTemplates.agent;
+  };
+
   const generateAI = async () => {
     if (!aiPrompt.trim()) return;
     setAiLoading(true);
@@ -531,18 +542,17 @@ export default function AgentVault() {
       if (data.content) {
         setAiResult(data.content);
         showToast("Generation complete", "success");
-      } else if (data.error) {
-        // Fallback to mock if API not configured
-        setAiResult(
-          `# AI Generated ${CATS[aiDocType].singular}\n\n## Objective\nYou are built to handle: "${aiPrompt}".\n\n## Instructions\n1. Analyze input thoroughly.\n2. Apply modern principles.\n3. Return optimized output.\n\n\`\`\`javascript\nconst vault = "secured";\nconsole.log(vault);\n\`\`\``
+      } else {
+        setAiResult(buildMockContent(aiPrompt, aiDocType));
+        showToast(
+          data.error
+            ? "Using mock generation (no API key configured)"
+            : "Using mock generation (unexpected response)",
+          "info"
         );
-        showToast("Using mock generation (no API key)", "info");
       }
     } catch {
-      // Fallback mock
-      setAiResult(
-        `# AI Generated ${CATS[aiDocType].singular}\n\n## Objective\nYou are built to handle: "${aiPrompt}".\n\n## Instructions\n1. Analyze input thoroughly.\n2. Apply modern principles.\n3. Return optimized output.\n\n\`\`\`javascript\nconst vault = "secured";\nconsole.log(vault);\n\`\`\``
-      );
+      setAiResult(buildMockContent(aiPrompt, aiDocType));
       showToast("Using mock generation (API unavailable)", "info");
     }
     setAiLoading(false);

@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
   if (!apiKey) {
     return NextResponse.json(
       { error: "ANTHROPIC_API_KEY not configured" },
-      { status: 200 }
+      { status: 503 }
     );
   }
 
@@ -58,11 +58,26 @@ export async function POST(request: NextRequest) {
     }
 
     const data = await res.json();
+
+    if (!Array.isArray(data.content) || data.content.length === 0) {
+      return NextResponse.json(
+        { error: "Unexpected API response format", details: JSON.stringify(data) },
+        { status: 502 }
+      );
+    }
+
     const content = data.content
-      ?.map((block: { type: string; text?: string }) =>
+      .map((block: { type: string; text?: string }) =>
         block.type === "text" ? block.text : ""
       )
       .join("");
+
+    if (!content) {
+      return NextResponse.json(
+        { error: "API returned empty content" },
+        { status: 502 }
+      );
+    }
 
     return NextResponse.json({ content });
   } catch (err) {
