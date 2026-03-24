@@ -16,7 +16,7 @@ import {
 function BrandLogo({ className = "w-8 h-8" }: { className?: string }) {
   return (
     <Image
-      src="/logo.svg"
+      src="/icons/00Claude-refined.svg"
       alt="00CLAUDE"
       className={className}
       width={32}

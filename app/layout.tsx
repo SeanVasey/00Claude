@@ -6,6 +6,7 @@ export const metadata: Metadata = {
   description:
     "A library and IDE for Agent Skills, AGENTS.md, and CLAUDE.md. Discover, curate, version, test, and deploy agent capabilities.",
   manifest: "/manifest.json",
+  applicationName: "00CLAUDE",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
@@ -13,19 +14,25 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: "/favicon.ico", sizes: "16x16 32x32" },
-      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
-      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
-      { url: "/logo.svg", type: "image/svg+xml", sizes: "any" },
+      { url: "/icons/00Claude-refined.svg", type: "image/svg+xml", sizes: "any" },
+      { url: "/favicon.ico", type: "image/x-icon", sizes: "16x16 32x32 48x48" },
+      { url: "/icons/favicon-32.png", type: "image/png", sizes: "32x32" },
+      { url: "/icons/favicon-16.png", type: "image/png", sizes: "16x16" },
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
     ],
     apple: [
-      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+      { url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+      { url: "/icons/apple-touch-icon-180.png", sizes: "180x180", type: "image/png" },
+      { url: "/icons/apple-touch-icon-167.png", sizes: "167x167", type: "image/png" },
+      { url: "/icons/apple-touch-icon-152.png", sizes: "152x152", type: "image/png" },
+      { url: "/icons/apple-touch-icon-120.png", sizes: "120x120", type: "image/png" },
     ],
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0b0a10",
+  themeColor: "#2A2A2F",
   width: "device-width",
   initialScale: 1,
 };
