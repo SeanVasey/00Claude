@@ -14,16 +14,20 @@ import {
 // BRAND LOGO COMPONENT
 // ═══════════════════════════════════════════════════════════════════════
 function BrandLogo({ className = "w-8 h-8" }: { className?: string }) {
+  // Wrap in a span so drop-shadow filter sits on a container, not the <img> itself.
+  // This prevents the glow from being clipped at the img element boundary.
   return (
-    <Image
-      src="/icons/00Claude-refined.svg"
-      alt="00CLAUDE"
-      className={className}
-      width={32}
-      height={32}
-      priority
-      unoptimized
-    />
+    <span className={`inline-flex shrink-0 ${className}`}>
+      <Image
+        src="/icons/00Claude-refined.svg"
+        alt="00CLAUDE"
+        className="w-full h-full"
+        width={32}
+        height={32}
+        priority
+        unoptimized
+      />
+    </span>
   );
 }
 
@@ -605,7 +609,7 @@ export default function AgentVault() {
 
         {/* Header — z-30 to stay above hero z-10 */}
         <header className="relative z-30 flex justify-between items-center p-6 lg:px-12 lg:py-8 w-full max-w-7xl mx-auto">
-          <div className="font-bebas text-2xl lg:text-3xl tracking-widest flex items-center gap-2 drop-shadow-md">
+          <div className="font-bebas text-2xl lg:text-3xl tracking-widest flex items-center gap-2">
             <BrandLogo className="w-8 h-8 drop-shadow-[0_0_12px_rgba(69,76,252,0.55)] drop-shadow-[0_0_10px_rgba(242,90,56,0.5)]" />
             <span className="mt-1"><span className="text-white">00</span><span className="text-[#F25A38]">CLAUDE</span></span>
           </div>
