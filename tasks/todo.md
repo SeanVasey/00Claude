@@ -1,6 +1,23 @@
 # Task Plan
 
-## Current Session — 2026-03-23: Update Documentation Standards
+## Current Session — 2026-05-24: Canonical CLAUDE.md + Agent/Skills Platform
+
+### Completed
+
+- [x] Rewrite `CLAUDE.md` against the canonical version, preserving the 00CLAUDE project-context section
+- [x] Create `AGENTS.md` persona registry (7 personas: lead-engineer, implementer, researcher, reviewer, security-specialist, ux-specialist, release-engineer)
+- [x] Create `SKILLS.md` registry indexing all `.claude/skills/*/SKILL.md` entries
+- [x] Scaffold `.claude/` with `settings.json`, 7 subagent definitions, and 3 Anthropic-format skills (`verify`, `code-review`, `security-review`)
+- [x] Upgrade `next` and `eslint-config-next` to `^16.2.6` to clear 3 high-severity advisories
+- [x] Add `npm run typecheck` script and wire into CI
+- [x] Add `npm audit --audit-level=high` step to CI
+- [x] Update `scripts/smoke-check.sh` to verify new required files and detect skill-registry drift
+- [x] Refresh `README.md` with What's New section, grouped features, and updated architecture tree
+- [x] Refresh `CHANGELOG.md` and `docs/MANIFEST.md`
+- [x] Append lessons learned to `tasks/lessons.md`
+- [x] Verify lint, lint:md, typecheck, smoke, build, and `npm audit --audit-level=high` all pass
+
+## Previous Session — 2026-03-23: Update Documentation Standards
 
 ### Completed
 
