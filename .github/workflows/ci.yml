@@ -27,8 +27,14 @@ jobs:
       - name: Lint code
         run: npm run lint
 
+      - name: Typecheck
+        run: npm run typecheck
+
       - name: Smoke check
         run: npm run test:smoke
 
       - name: Build
         run: npm run build
+
+      - name: Audit dependencies (high+)
+        run: npm audit --audit-level=high

@@ -20,6 +20,9 @@ out/
 .env.local
 .env.*.local
 
+# Claude Code local-only settings (per-user, not shared)
+.claude/settings.local.json
+
 # OS/editor artifacts
 .DS_Store
 Thumbs.db

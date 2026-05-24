@@ -11,9 +11,9 @@
 
 <p align="center">
   <a href="https://github.com/SeanVasey/00Claude/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/SeanVasey/00Claude/ci.yml?branch=main&label=CI&logo=github" alt="CI status" /></a>
-  <img src="https://img.shields.io/badge/version-0.4.0-blue?logo=semantic-release" alt="Version 0.4.0" />
+  <img src="https://img.shields.io/badge/version-0.5.0-blue?logo=semantic-release" alt="Version 0.5.0" />
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache_2.0-green" alt="Apache 2.0 License" /></a>
-  <img src="https://img.shields.io/badge/Next.js-16-black?logo=next.js" alt="Next.js 16" />
+  <img src="https://img.shields.io/badge/Next.js-16.2-black?logo=next.js" alt="Next.js 16.2" />
   <img src="https://img.shields.io/badge/React-19-61DAFB?logo=react" alt="React 19" />
   <img src="https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white" alt="TypeScript 5" />
   <img src="https://img.shields.io/badge/Tailwind_CSS-v4-06B6D4?logo=tailwindcss&logoColor=white" alt="Tailwind CSS v4" />
@@ -21,22 +21,66 @@
 
 ---
 
+## What's New — v0.5.0
+
+- **Agent + Skill platform integration** — new `AGENTS.md` persona registry and
+  `SKILLS.md` skill index, both wired into the smoke check so they cannot
+  drift from `.claude/`.
+- **First-class `.claude/` scaffold** — `settings.json`, six subagent
+  personas under `.claude/agents/`, and three Anthropic-format skills
+  (`verify`, `code-review`, `security-review`) under `.claude/skills/`.
+- **Hardened CI** — added `npm run typecheck` and `npm audit --audit-level=high`
+  gates to `.github/workflows/ci.yml`.
+- **Security patch** — bumped `next` and `eslint-config-next` to `16.2.6`,
+  clearing the three high-severity advisories present in `16.1.6`.
+
+See [CHANGELOG.md](CHANGELOG.md) for the full history.
+
 ## Features
 
+### Authoring & IDE
+
 - **AgentVault IDE** — AI-powered code generation with live markdown preview
-- **Anthropic API integration** — Claude-based agent skill authoring with server-side proxy
-- **Glassmorphic UI** — Spectrum gradient accents, ambient canvas animations, custom typography
-- **Document management** — Create, edit, version, and organize `CLAUDE.md`, `AGENTS.md`, and skill files
-- **Markdown linting** — Built-in quality gates for documentation standards
+- **Document management** — Create, edit, version, and organize `CLAUDE.md`,
+  `AGENTS.md`, and skill files
+- **Anthropic API integration** — Claude-based skill authoring through a
+  server-side proxy with mock fallback
+
+### Agent & Skill platform
+
+- **Persona registry (`AGENTS.md`)** — cross-tool source of truth for who
+  performs work, with what model, and with what authority
+- **Skill registry (`SKILLS.md`)** — index of Anthropic-format skills under
+  `.claude/skills/`, kept in sync by the smoke check
+- **Subagent definitions** — `.claude/agents/*.md` for `lead-engineer`,
+  `implementer`, `researcher`, `reviewer`, `security-specialist`,
+  `ux-specialist`, and `release-engineer`
+
+### Design & UX
+
+- **Glassmorphic UI** — Spectrum gradient accents, ambient canvas animations,
+  custom typography
+- **PWA support** — installable with a full app-icon suite (transparent
+  source SVG → 14 raster sizes) and web manifest
+
+### Quality gates
+
+- **Markdown linting** — `markdownlint-cli2` quality gates for documentation
+- **Smoke checks** — required files plus skill-registry drift detection
+- **Typecheck** — `tsc --noEmit` in CI
+- **`npm audit`** — fails CI on high/critical only; moderate is informational
+
+### Deployment
+
 - **CI/CD pipeline** — GitHub Actions on every PR and `main` push
-- **Vercel-ready** — Production config with secure response headers
-- **PWA support** — Installable with app icons and web manifest
+- **Vercel-ready** — production config with secure response headers
+- **GitHub Pages workflow** — conditional static export via `GITHUB_PAGES=true`
 
 ## Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
-| Framework | Next.js 16.1.6 (App Router) |
+| Framework | Next.js 16.2.6 (App Router) |
 | Language | TypeScript 5 |
 | UI | React 19.2.3, Tailwind CSS v4 |
 | Icons | lucide-react |
@@ -75,10 +119,12 @@ npm run build
 ### Run Checks
 
 ```bash
-npm test           # lint:md + smoke checks
-npm run lint       # ESLint
-npm run lint:md    # Markdown linting
-npm run test:smoke # File inventory check
+npm test            # lint:md + smoke checks
+npm run lint        # ESLint
+npm run lint:md     # Markdown linting
+npm run typecheck   # TypeScript --noEmit
+npm run test:smoke  # File + skill-registry smoke check
+npm audit --audit-level=high  # Fails CI on high/critical only
 ```
 
 ## Environment Variables
@@ -99,7 +145,11 @@ cp .env.example .env
 
 ```text
 .
-├── .github/workflows/   # CI automation
+├── .claude/             # Claude Code config, agents, skills, hooks
+│   ├── settings.json    # Permissions + env
+│   ├── agents/          # Subagent personas (lead-engineer, reviewer, ...)
+│   └── skills/          # Anthropic-format skills (verify, code-review, ...)
+├── .github/workflows/   # CI + GitHub Pages deploy
 ├── app/                 # Next.js App Router pages and API routes
 │   ├── api/anthropic/   # Claude API proxy endpoint
 │   ├── layout.tsx       # Root layout (fonts, metadata)
@@ -110,7 +160,9 @@ cp .env.example .env
 ├── public/              # Static assets (icons, SVGs, manifest)
 ├── scripts/             # Validation helper scripts
 ├── tasks/               # Task tracking (todo.md, lessons.md)
-├── CLAUDE.md            # AI operating instructions
+├── AGENTS.md            # Agent persona registry (who does the work)
+├── SKILLS.md            # Skill registry (what discrete capabilities exist)
+├── CLAUDE.md            # Project-level operating contract
 ├── CHANGELOG.md         # Release history
 ├── CODE_OF_CONDUCT.md   # Contributor conduct expectations
 ├── LICENSE              # Apache 2.0

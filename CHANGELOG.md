@@ -7,15 +7,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-05-24
+
+### Added
+
+- **`AGENTS.md`** — agent persona registry (lead-engineer, implementer,
+  researcher, reviewer, security-specialist, ux-specialist,
+  release-engineer) with model selection, scope, authority, and required
+  skills per persona.
+- **`SKILLS.md`** — skill registry that indexes every `.claude/skills/*/SKILL.md`
+  and documents the add/remove/rename workflow.
+- **`.claude/` scaffold**:
+  - `settings.json` with safe-default permissions allow/deny lists and
+    `NEXT_TELEMETRY_DISABLED=1`.
+  - Seven subagent definitions under `.claude/agents/` matching the
+    personas in `AGENTS.md`.
+  - Three Anthropic-format skills under `.claude/skills/`:
+    `verify`, `code-review`, `security-review` — each with valid
+    frontmatter, an optimal use case, and an anti-pattern.
+- `npm run typecheck` script (`tsc --noEmit`).
+- CI steps for `typecheck` and `npm audit --audit-level=high`.
+- Smoke-check coverage for `AGENTS.md`, `SKILLS.md`, `.claude/settings.json`,
+  every subagent and skill file, and the GitHub Pages workflow. Smoke
+  check now also fails if a directory under `.claude/skills/` is missing
+  from the `SKILLS.md` registry.
+
 ### Changed
 
-- Overhauled `CLAUDE.md` with expanded security standards (auth, input
-  validation, API access control, supply chain, production hardening),
-  refined CI/CD section (deployment gates, Vercel/GitHub Pages specifics),
-  updated project structure template, and streamlined workflow orchestration.
-- Upgraded `README.md` with centered logo, shields.io badge row (CI, version,
-  license, framework badges), improved features list, contributing section,
-  and security/license links.
+- **`CLAUDE.md`** rewritten against the latest canonical version: added
+  Thinking & Planning Discipline, Model Selection, PWA & Icon Assets,
+  Agent & Skills Platform Integration, Skill Authoring Standards, an
+  expanded README spec, and a Pre-Commit Self-Check. Preserved the
+  00CLAUDE project-context section at the top.
+- Upgraded `next` and `eslint-config-next` from `16.1.6` to `^16.2.6`,
+  clearing 3 high-severity advisories (the remaining 2 moderate
+  advisories are transitive postcss issues inside Next.js with no
+  forward-compatible patch).
+- `README.md` — added a "What's New" section, grouped features by capability
+  area, refreshed the architecture tree to include `.claude/`, updated
+  framework version badges, and documented `typecheck` + `npm audit` in the
+  Run Checks block.
 
 ## [0.4.0] - 2026-03-13
 
