@@ -24,4 +24,3 @@ without explicit user approval.
 ## Required Skills
 
 - `verify`
-- `run`
