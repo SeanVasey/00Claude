@@ -23,4 +23,3 @@ beyond verification (lint/build/test).
 ## Required Skills
 
 - `code-review`
-- `review`

@@ -32,7 +32,6 @@ skills:
   - code-review
   - security-review
   - verify
-  - init
 ```
 
 Default lead for any task that touches more than one file, introduces a new
@@ -98,7 +97,6 @@ scope:
 authority: posts review comments; does not push commits
 skills:
   - code-review
-  - review
 ```
 
 Independent second opinion. Receives no context from the implementing
@@ -163,7 +161,6 @@ scope:
 authority: edits release-adjacent files; does not push tags without explicit user approval
 skills:
   - verify
-  - run
 ```
 
 ---

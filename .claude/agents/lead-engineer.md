@@ -27,4 +27,3 @@ hooks. Never commits secrets.
 - `verify` — run before every commit
 - `code-review` — self-review the diff before pushing
 - `security-review` — invoke `security-specialist` on auth/secret/header changes
-- `init` — when bootstrapping new project structure
